@@ -1,29 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
 
+#include "websocket.h"
+
 #define PORT_WEBSOCKET 8089
-#define PRINT_DATA 1
+#define PRINT_HTTP_REQUEST_HEADER 1
+#define PRINT_HTTP_REQUEST_BODY 1
+#define PRINT_HTTP_RESPONSE_HEADER 1
+#define PRINT_HTTP_RESPONSE_BODY 1
+#define PRINT_WS_DATA 1
 
 #define PRINT_BUFFER(data, len) {		\
-    if (len < 0) len = 0;			\
-    char* buffer = (char*) malloc(len + 1);	\
-    buffer[len] = '\0';				\
-    strncpy(buffer, data, len);			\
+    int buflen = len;				\
+    if (buflen < 0) buflen = 0;			\
+    char* buffer = (char*) malloc(buflen + 1);	\
+    buffer[buflen] = '\0';				\
+    strncpy(buffer, data, buflen);			\
     printf("%s", buffer);			\
-    free(buffer);				\
-}
-
-#define PRINTLN_BUFFER(data, len) {		\
-    if (len < 0) len = 0;			\
-    char* buffer = (char*) malloc(len + 1);	\
-    buffer[len] = '\0';				\
-    strncpy(buffer, data, len);			\
-    printf("%s\n", buffer);			\
     free(buffer);				\
 }
 
@@ -74,10 +73,7 @@ struct nread_tcp {
   u_short th_urp; /* urgent pointer */
 };
 
-void dispatcher_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
-
-//char* default_filename = "/home/mkoch/test.pcapng";
-const char* default_filename = "/home/mkoch/acceptence-bug-A-party.pcapng";
+void dispatcherHandler(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 int main(int argc, char** argv) {
   pcap_t *fp;
@@ -88,13 +84,12 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-//  if ((fp = pcap_open_offline(argv[1], errbuf)) == NULL) {
-  if ((fp = pcap_open_offline(default_filename, errbuf)) == NULL) {
+  if ((fp = pcap_open_offline(argv[1], errbuf)) == NULL) {
     fprintf(stderr, "\bError opening dump file\n");
     return -1;
   }
 
-  pcap_loop(fp, 0, dispatcher_handler, NULL);
+  pcap_loop(fp, 0, dispatcherHandler, NULL);
   return 0;
 }
 
@@ -103,104 +98,194 @@ int is_incoming_ip_packet(const struct nread_ip* ip) {
   return memcmp(&(ip->ip_src), &local_network, 3) != 0;
 }
 
-void print_packet_data(const char* data, int len) {
-    if (PRINT_DATA == 0) {
-        return;
-    }
-
-    PRINTLN_BUFFER(data, len);
-}
-
-void print_http_request(const char* data, int /* len */) {
-  const char* eol_char = strchr(data, '\r');
-
-  if (!eol_char) {
-    printf("DATA\n");
-    return;
+void printIndent(int indent) {
+  for (int index = 0; index < indent; index++) {
+    printf(" ");
   }
-
-  int eol = eol_char - data;
-  PRINTLN_BUFFER(data, eol);
 }
 
-void handle_http_request(const char* data, int len) {
-    if (len > 10 && strncmp(data, "GET ", 4) == 0) {
-        print_http_request(data, len);
-    } else if (len > 10 && strncmp(data, "POST ", 5) == 0) {
-        print_http_request(data, len);
-    } else if (len > 10 && strncmp(data, "PUT ", 4) == 0) {
-        print_http_request(data, len);
-    } else { 
-        printf("DATA\n");
-    }
+void printIndented(int indent, const char* str, int len) {
+  const char* tmp = str;
 
-    print_packet_data(data, len);
-}
+  while (len > 0) {
+    const char* rPos = strchr(tmp, '\r');
+    const char* nPos = strchr(tmp, '\n');
+    printIndent(indent);
 
-void handle_http_response(const char* data, int len) {
-  if (len > 10 && strncmp(data, "HTTP/1.1", 8) == 0) {
-    print_http_request(data, len);
-  } else {
-    printf("DATA\n");
-  }
+    if (nPos != NULL) {
+      if (rPos != NULL && rPos < nPos) {
+	PRINT_BUFFER(tmp, rPos - tmp);
+      } else {
+	PRINT_BUFFER(tmp, nPos - tmp);
+      }
 
-  print_packet_data(data, len);
-}
-
-void handle_websocket_notification(const char* data, int len) {
-  const char* p_type = strstr(data, "\"type\":\"");
-
-  if (p_type) {
-    const char* p_type_str = p_type + 8;
-    const char* p_type_str_end = strchr(p_type_str, '\"');
-
-    if (p_type_str_end) {
-      int len = p_type_str_end - p_type_str;
-      PRINT_BUFFER(p_type_str, len);
-    }
-  }
-
-  printf("\n");
-  print_packet_data(data + 4, len - 4);
-}
-
-void handle_tcp_packet(const struct nread_ip* ip, const struct nread_tcp* tcp) {
-  int len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
-  const char* data = ((const char*) tcp) + tcp->th_off * 4;
-
-  if (len == 0) {
-//    printf(" empty\n");
-    return;
-  }
-
-  if (is_incoming_ip_packet(ip)) {
-    if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
-      printf(" << WS");
-      handle_websocket_notification(data, len);
+      len -= nPos - tmp + 1;
+      tmp = nPos + 1;
     } else {
-      printf(" <  ");
-      handle_http_response(data, len);
+      PRINT_BUFFER(tmp, len);
+      len = 0;
     }
-  } else {
-    printf(" >  ");
-    handle_http_request(data, len);
-  }
 
-  if (PRINT_DATA) {
     printf("\n");
   }
 }
 
-void handle_ip_packet(const struct nread_ip* ip, int /* packet_length */) {
+}
+
+void printHttpRequestTitle(const char* data, int /* len */) {
+  const char* eol_char = strchr(data, '\r');
+
+  if (!eol_char) {
+    printf("DATA\n\n");
+    return;
+  }
+
+  int eol = eol_char - data;
+  PRINT_BUFFER(data, eol);
+  printf("\n\n");
+}
+
+void handleHttpRequest(const char* data, int len) {
+  if (len > 10 && strncmp(data, "GET ", 4) == 0) {
+    printHttpRequestTitle(data, len);
+  } else if (len > 10 && strncmp(data, "POST ", 5) == 0) {
+    printHttpRequestTitle(data, len);
+  } else if (len > 10 && strncmp(data, "PUT ", 4) == 0) {
+    printHttpRequestTitle(data, len);
+  } else {
+    printf("DATA\n\n");
+  }
+
+  if (PRINT_HTTP_REQUEST_HEADER) {
+    printIndented(4, data, len);
+    printf("\n");
+  }
+}
+
+void handleHttpResponse(const char* data, int len) {
+  if (len > 10 && strncmp(data, "HTTP/1.1", 8) == 0) {
+    printHttpRequestTitle(data, len);
+  } else {
+    printf("DATA\n\n");
+  }
+
+  if (PRINT_HTTP_RESPONSE_HEADER || PRINT_HTTP_RESPONSE_BODY) {
+    const char* bodySeparator = strstr(data, "\r\n\r\n");
+
+    if (bodySeparator) {
+      if (PRINT_HTTP_RESPONSE_HEADER) {
+	printIndented(4, data, bodySeparator - data);
+	printf("\n");
+      }
+
+      int bodyLength = len - (bodySeparator - data + 4);
+
+      if (PRINT_HTTP_RESPONSE_BODY) {
+	if (bodyLength > 0) {
+	  printIndented(4, bodySeparator + 4, bodyLength);
+	  printf("\n");
+	} else {
+	  printIndented(4, "Empty body\n\n", 12);
+	}
+      }
+    } else {
+      PRINT_BUFFER(data, len);
+      printf("\n");
+    }
+  }
+}
+
+static WebSocketParser* webSockets[10];
+static int num_known_parties = 0;
+static char* known_parties[10];
+
+int getPartyIndex(const struct in_addr *ip_addr) {
+  char* ip_name = inet_ntoa((struct in_addr) *ip_addr);
+  int foundIndex = -1;
+
+  for (int index = 0; index < num_known_parties; index++) {
+    if (strcmp(ip_name, known_parties[index]) == 0) {
+      foundIndex = index;
+      break;
+    }
+  }
+
+  if (foundIndex == -1 && num_known_parties < 10) {
+    int len = strlen(ip_name);
+    char* tmp_name = (char*) malloc(len + 1);
+    strncpy(tmp_name, ip_name, len);
+    tmp_name[len] = '\0';
+    known_parties[num_known_parties] = tmp_name;
+    webSockets[num_known_parties] = new WebSocketParser();
+    foundIndex = num_known_parties;
+    num_known_parties++;
+  }
+
+  return foundIndex;
+}
+
+const char* getPartyName(int partyIndex) {
+  char* party_name = (char*) malloc(2);
+  party_name[0] = 'A' + partyIndex;
+  party_name[1] = '\0';
+  return party_name;
+}
+
+void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* data, uint16_t len) {
+  WebSocketFrame* frame;
+  WebSocketParser* ws = webSockets[partyIndex];
+  ws->addStreamData(data, len);
+
+  while ((frame = ws->getNextFrame()) != NULL) {
+    printf(" %s << %ld.%06ld WS %s\n\n", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec, frame->getType());
+
+    if (PRINT_WS_DATA) {
+      printf("    %s\n\n", frame->getData());
+
+  }
+}
+
+void handle_tcp_packet(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
+  uint16_t len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
+  const char* data = ((const char*) tcp) + tcp->th_off * 4;
+
+  if (len == 0) {
+    return;
+  }
+
+  const struct in_addr* ip_addr;
+
+  if (is_incoming_ip_packet(ip)) {
+    ip_addr = &(ip->ip_dst);
+  } else {
+    ip_addr = &(ip->ip_src);
+  }
+
+  int partyIndex = getPartyIndex(ip_addr);
+
+  if (is_incoming_ip_packet(ip)) {
+    if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
+      handleWebsocketNotification(tv, partyIndex, data, len);
+    } else {
+      printf(" %s << %ld.%06ld ", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec);
+      handleHttpResponse(data, len);
+    }
+  } else {
+    printf(" %s >> %ld.%06ld ", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec);
+    handleHttpRequest(data, len);
+  }
+}
+
+void handleIpPacket(struct timeval tv, const struct nread_ip* ip, int /* packet_length */) {
   if (ip->ip_p == IPPROTO_TCP) {
-    const struct nread_tcp* tcp = (struct nread_tcp*)(ip + 1);    
-    handle_tcp_packet(ip, tcp);
+    const struct nread_tcp* tcp = (struct nread_tcp*)(ip + 1);
+    handle_tcp_packet(tv, ip, tcp);
   } else {
     printf("Unknown IP protocol\n");
   }
 }
 
-void dispatcher_handler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_header, const u_char *packet) {
+void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_header, const u_char *packet) {
   u_int length = packet_header->len;  /* packet header length  */
   struct ether_header *eptr = (struct ether_header *) (packet);
 
@@ -208,7 +293,7 @@ void dispatcher_handler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_h
     struct nread_ip* ip;
 
     ip = (struct nread_ip*) (packet + sizeof(struct ether_header));
-    handle_ip_packet(ip, length - sizeof(struct ether_header));
+    handleIpPacket(packet_header->ts, ip, length - sizeof(struct ether_header));
   }
 }
 
