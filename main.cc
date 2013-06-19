@@ -112,7 +112,7 @@ void printIndented(int indent, const char* str, int len) {
     const char* nPos = strchr(tmp, '\n');
     printIndent(indent);
 
-    if (nPos != NULL) {
+    if (nPos != NULL && (nPos - tmp) < len) {
       if (rPos != NULL && rPos < nPos) {
 	PRINT_BUFFER(tmp, rPos - tmp);
       } else {
@@ -158,7 +158,10 @@ void handleHttpRequest(const char* data, int len) {
 
   if (PRINT_HTTP_REQUEST_HEADER) {
     printIndented(4, data, len);
-    printf("\n");
+
+    if (data[len - 1] != '\n') {
+      printf("\n");
+    }
   }
 }
 
