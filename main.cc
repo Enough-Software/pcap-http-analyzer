@@ -130,6 +130,17 @@ void printIndented(int indent, const char* str, int len) {
   }
 }
 
+static long baseSeconds = 0;
+
+void printTimestamp(struct timeval tv) {
+  if (baseSeconds == 0) {
+    baseSeconds = tv.tv_sec;
+  }
+
+  long seconds = tv.tv_sec - baseSeconds;
+  printf("%02ld:%02ld:%02ld.%06ld ", seconds / 3600, (seconds / 60) % 60, seconds % 60, tv.tv_usec);
+}
+
 }
 
 void printHttpRequestTitle(const char* data, int /* len */) {
@@ -240,7 +251,9 @@ void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* 
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
-    printf(" %s << %ld.%06ld WS %s\n\n", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec, frame->getType());
+    printf(" %s << ", getPartyName(partyIndex));
+    printTimestamp(tv);
+    printf("WS %s\n\n", frame->getType());
 
     if (PRINT_WS_DATA) {
       printf("    %s\n\n", frame->getData());
@@ -270,11 +283,18 @@ void handle_tcp_packet(struct timeval tv, const struct nread_ip* ip, const struc
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
       handleWebsocketNotification(tv, partyIndex, data, len);
     } else {
-      printf(" %s << %ld.%06ld ", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec);
+      printf(" %s << ", getPartyName(partyIndex));
+      printTimestamp(tv);
       handleHttpResponse(data, len);
     }
   } else {
-    printf(" %s >> %ld.%06ld ", getPartyName(partyIndex), tv.tv_sec, tv.tv_usec);
+    printf(" %s >> ", getPartyName(partyIndex));
+    printTimestamp(tv);
+
+    if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
+      printf("WS ");
+    }
+
     handleHttpRequest(data, len);
   }
 }
