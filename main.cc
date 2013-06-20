@@ -7,6 +7,10 @@
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
 
+#ifdef ENABLE_JSON
+#include <json/json.h>
+#endif /* ENABLE_JSON */
+
 #include "websocket.h"
 
 #define PORT_WEBSOCKET 8089
@@ -141,7 +145,36 @@ void printTimestamp(struct timeval tv) {
   printf("%02ld:%02ld:%02ld.%06ld ", seconds / 3600, (seconds / 60) % 60, seconds % 60, tv.tv_usec);
 }
 
+#ifdef ENABLE_JSON
+
+void print_json_object(json_object* jobj, int indent) {
+  printIndent(indent);
+  printf("{\n");
+
+  /*
+  struct json_object_iterator it = json_object_iter_begin(jobj);
+  struct json_object_iterator itEnd = json_object_iter_end(jobj);
+
+  while (!json_object_iter_equal(&it, &itEnd)) {
+    const char* keyName = json_object_iter_peek_name(&it);
+    print_indent(indent + 2);
+    printf("%s:\n", keyName);
+
+    json_object_iter_next(&it);
+  }
+  */
+
+  /*
+  for (int index = 0; index < json_object_array_length(jobj), index++) {
+    const json_object* = json_object_array_get_idx(jobj, index);
+  }
+  */
+
+  printIndent(indent);
+  printf("}\n");
 }
+
+#endif /* ENABLE_JSON */
 
 void printHttpRequestTitle(const char* data, int /* len */) {
   const char* eol_char = strchr(data, '\r');
@@ -258,6 +291,18 @@ void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* 
     if (PRINT_WS_DATA) {
       printf("    %s\n\n", frame->getData());
 
+#ifdef ENABLE_JSON
+      enum json_tokener_error jerr;
+      json_tokener* tok = json_tokener_new();
+      json_object* jobj = json_tokener_parse_ex(tok, data + 4, len - 4);
+
+      if ((jerr = json_tokener_get_error(tok)) == json_tokener_success) {
+	print_json_object(jobj, 4);
+      } else {
+	print_packet_data(data + 4, len - 4);
+      }
+#endif /* ENABLE_JSON */
+    }
   }
 }
 
