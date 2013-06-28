@@ -287,7 +287,7 @@ void handleWebsocketNotification(struct timeval tv, int partyIndex, WebSocketPar
     printTimestamp(tv);
     printf("WS %s\n\n", frame->getSummary());
 
-    if (PRINT_WS_DATA) {
+    if (PRINT_WS_DATA && frame->getType() == TEXT) {
       printf("    %s\n\n", frame->getData());
 
 #ifdef ENABLE_JSON
