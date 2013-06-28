@@ -123,8 +123,7 @@ WebSocketParser::getNextFrame() {
     if (payloadLength == 126) {
       payloadLength = ntohs(*((uint16_t*) (mData + 2)));
       payloadHeaderLength += 2;
-    }
-    else if (payloadLength == 127) {
+    } else if (payloadLength == 127) {
       payloadLength = ntohl(*((uint32_t*) (mData + 2)));
       payloadLength += ((uint64_t) ntohl(*((uint32_t*) (mData + 6)))) << 32;
       payloadHeaderLength += 10;
@@ -161,8 +160,7 @@ WebSocketParser::getNextFrame() {
 	    memcpy(summary, typeStart, len);
 	  }
 	}
-      }
-      else {
+      } else {
 	summary = (char*) WebSocketFrame::typeAsString(frameType);
       }
 
