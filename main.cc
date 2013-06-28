@@ -242,30 +242,30 @@ void handleHttpResponse(const char* data, int len) {
   }
 }
 
-static WebSocketParser* webSockets[10];
-static int num_known_parties = 0;
-static char* known_parties[10];
+static WebSocketParser* webSocketsIn[10];
+static int numKnownParties = 0;
+static char* knownParties[10];
 
 int getPartyIndex(const struct in_addr *ip_addr) {
   char* ip_name = inet_ntoa((struct in_addr) *ip_addr);
   int foundIndex = -1;
 
-  for (int index = 0; index < num_known_parties; index++) {
-    if (strcmp(ip_name, known_parties[index]) == 0) {
+  for (int index = 0; index < numKnownParties; index++) {
+    if (strcmp(ip_name, knownParties[index]) == 0) {
       foundIndex = index;
       break;
     }
   }
 
-  if (foundIndex == -1 && num_known_parties < 10) {
+  if (foundIndex == -1 && numKnownParties < 10) {
     int len = strlen(ip_name);
     char* tmp_name = (char*) malloc(len + 1);
     strncpy(tmp_name, ip_name, len);
     tmp_name[len] = '\0';
-    known_parties[num_known_parties] = tmp_name;
-    webSockets[num_known_parties] = new WebSocketParser();
-    foundIndex = num_known_parties;
-    num_known_parties++;
+    knownParties[numKnownParties] = tmp_name;
+    webSocketsIn[numKnownParties] = new WebSocketParser();
+    foundIndex = numKnownParties;
+    numKnownParties++;
   }
 
   return foundIndex;
@@ -278,9 +278,8 @@ const char* getPartyName(int partyIndex) {
   return party_name;
 }
 
-void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* data, uint16_t len) {
+void handleWebsocketNotification(struct timeval tv, int partyIndex, WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
-  WebSocketParser* ws = webSockets[partyIndex];
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
@@ -326,7 +325,8 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
 
   if (is_incoming_ip_packet(ip)) {
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
-      handleWebsocketNotification(tv, partyIndex, data, len);
+      WebSocketParser* ws = webSocketsIn[partyIndex];
+      handleWebsocketNotification(tv, partyIndex, ws, data, len);
     } else {
       printf(" %s << ", getPartyName(partyIndex));
       printTimestamp(tv);
