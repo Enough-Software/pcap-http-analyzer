@@ -286,7 +286,7 @@ void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* 
   while ((frame = ws->getNextFrame()) != NULL) {
     printf(" %s << ", getPartyName(partyIndex));
     printTimestamp(tv);
-    printf("WS %s\n\n", frame->getType());
+    printf("WS %s\n\n", frame->getSummary());
 
     if (PRINT_WS_DATA) {
       printf("    %s\n\n", frame->getData());
@@ -306,7 +306,7 @@ void handleWebsocketNotification(struct timeval tv, int partyIndex, const char* 
   }
 }
 
-void handle_tcp_packet(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
+void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
   uint16_t len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
@@ -347,7 +347,7 @@ void handle_tcp_packet(struct timeval tv, const struct nread_ip* ip, const struc
 void handleIpPacket(struct timeval tv, const struct nread_ip* ip, int /* packet_length */) {
   if (ip->ip_p == IPPROTO_TCP) {
     const struct nread_tcp* tcp = (struct nread_tcp*)(ip + 1);
-    handle_tcp_packet(tv, ip, tcp);
+    handleTcpPacket(tv, ip, tcp);
   } else {
     printf("Unknown IP protocol\n");
   }

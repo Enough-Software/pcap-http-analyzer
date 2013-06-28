@@ -1,13 +1,19 @@
 #include <arpa/inet.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "websocket.h"
 
-WebSocketFrame::WebSocketFrame() : mData(NULL) {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mSummary(NULL) {
 }
 
 WebSocketFrame::~WebSocketFrame() {
+}
+
+FrameType
+WebSocketFrame::getType() {
+  return mType;
 }
 
 const char*
@@ -21,16 +27,53 @@ WebSocketFrame::setData(const char* data) {
 }
 
 const char*
-WebSocketFrame::getType() {
-  return mType;
+WebSocketFrame::getSummary() {
+  return mSummary;
 }
 
 void
-WebSocketFrame::setType(const char* type) {
-  mType = type;
+WebSocketFrame::setSummary(const char* summary) {
+  mSummary = summary;
 }
 
-WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false) {
+const char*
+WebSocketFrame::typeAsString(FrameType type) {
+  const char* str;
+
+  switch (type) {
+  case CONTINUATION:
+    str = "CONTINUATION";
+    break;
+
+  case TEXT:
+    str = "TEXT";
+    break;
+
+  case BINARY:
+    str = "BINARY";
+    break;
+
+  case CONNECTION_CLOSE:
+    str = "CONNECTION_CLOSE";
+    break;
+
+  case PING:
+    str = "PING";
+    break;
+
+  case PONG:
+    str = "PONG";
+    break;
+
+  default:
+    str = "UNKNOWN";
+    break;
+  }
+
+  return str;
+}
+
+WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false), mLastFrameType(CONTINUATION) {
 }
 
 WebSocketParser::~WebSocketParser() {
@@ -63,44 +106,69 @@ WebSocketParser::getNextFrame() {
 
       mHeaderHandled = true;
 
-      WebSocketFrame* frame = new WebSocketFrame();
-      frame->setType("HEADER");
+      WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
       frame->setData("HEADER DATA");
+      frame->setSummary("HEADER");
       return frame;
     }
   }
 
-  if (mLength >= 4) {
-    uint16_t payloadLength = ntohs(*((uint16_t*) (mData + 2)));
+  if (mLength >= 2) {
+    uint8_t payloadHeaderLength = 2;
+    uint16_t frameHeader = *((uint16_t*) mData);
+    uint8_t frameFlags = (frameHeader & 0xf0) >> 4;
+    FrameType frameType = static_cast<FrameType>(frameHeader & 0x0f);
+    uint64_t payloadLength = (frameHeader & 0xff00) >> 8;
 
-    if (mLength >= payloadLength + 4) {
+    if (payloadLength == 126) {
+      payloadLength = ntohs(*((uint16_t*) (mData + 2)));
+      payloadHeaderLength += 2;
+    }
+    else if (payloadLength == 127) {
+      payloadLength = ntohl(*((uint32_t*) (mData + 2)));
+      payloadLength += ((uint64_t) ntohl(*((uint32_t*) (mData + 6)))) << 32;
+      payloadHeaderLength += 10;
+    }
+
+    if (mLength >= payloadHeaderLength + payloadLength) {
+      if (frameType != CONTINUATION) {
+	mLastFrameType = (FrameType) frameType; 
+      }
+
       char* payload = (char*) malloc(payloadLength + 1);
       payload[payloadLength] = '\0';
-      memcpy(payload, mData + 4, payloadLength);
-      mLength -= payloadLength + 4;
+      memcpy(payload, mData + payloadHeaderLength, payloadLength);
+      mLength -= payloadHeaderLength + payloadLength;
 
       if (mLength > 0) {
-	memmove(mData, mData + 4 + payloadLength, mLength);
+	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
       }
 
-      const char* typePosition = strstr(payload, "\"type\":\"");
-      char* type = "Unknown notification type";
+      char* summary = "Unknown notification type";
 
-      if (typePosition) {
-	const char* typeStart = typePosition + 8;
-	const char* typeEnd = strchr(typeStart, '\"');
+      if (mLastFrameType == TEXT) {
+	const char* typeStart = strstr(payload, "\"type\":\"");
+	const char* typeEnd = NULL;
 
-	if (typeEnd) {
-	  int len = typeEnd - typeStart;
-	  type = (char*) malloc(len + 1);
-	  type[len] = '\0';
-	  memcpy(type, typeStart, len);
+	if (typeStart) {
+	  typeStart = typeStart + 8;
+	  typeEnd = strchr(typeStart, '\"');
+
+	  if (typeEnd) {
+	    int len = typeEnd - typeStart;
+	    summary = (char*) malloc(len + 1);
+	    summary[len] = '\0';
+	    memcpy(summary, typeStart, len);
+	  }
 	}
       }
+      else {
+	summary = (char*) WebSocketFrame::typeAsString(frameType);
+      }
 
-      WebSocketFrame* frame = new WebSocketFrame();
-      frame->setType(type);
+      WebSocketFrame* frame = new WebSocketFrame(frameFlags, mLastFrameType);
       frame->setData(payload);
+      frame->setSummary(summary);
       return frame;
     }
   }
