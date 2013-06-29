@@ -282,7 +282,7 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
     ip_addr = &(ip->ip_src);
   }
 
-  char* localHostname = inet_ntoa((struct in_addr) *ip_addr);
+  string localHostname = inet_ntoa((struct in_addr) *ip_addr);
   CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
