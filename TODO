@@ -1,6 +1,5 @@
 - tcp connection tracking
 - configurable time format (time since dump start, wall time, disabled, etc.)
-- better websocket frame support (e.g. heartbeat packets)
 - command line argument parsing
-- port to OSX
 - JSON parsing support
+- add configure.ac/Makfile.am
