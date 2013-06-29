@@ -30,13 +30,13 @@ WebSocketFrame::getData() {
   return mData;
 }
 
-uint16_t
+unsigned int
 WebSocketFrame::getDataLength() {
   return mDataLength;
 }
 
 void
-WebSocketFrame::setData(const char* data, uint16_t len) {
+WebSocketFrame::setData(const char* data, unsigned int len) {
   mData = data;
   mDataLength = len;
 }
@@ -127,7 +127,7 @@ WebSocketParser::~WebSocketParser() {
 }
 
 void
-WebSocketParser::addStreamData(const char* data, uint16_t len) {
+WebSocketParser::addStreamData(const char* data, unsigned int len) {
   if (strncmp(data, "GET /", 5) == 0
       || strncmp(data, "HTTP", 4) == 0) {
     mHeaderHandled = false;

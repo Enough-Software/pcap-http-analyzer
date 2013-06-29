@@ -27,8 +27,8 @@ class WebSocketFrame
   FrameType getType();
 
   const char* getData();
-  uint16_t getDataLength();
-  void setData(const char* data, uint16_t len);
+  unsigned int getDataLength();
+  void setData(const char* data, unsigned int len);
 
   virtual string getSubject();
   virtual void setSubject(string subject);
@@ -39,7 +39,7 @@ class WebSocketFrame
   int mFlags;
   FrameType mType;
   const char* mData;
-  uint16_t mDataLength;
+  unsigned int mDataLength;
   string mSubject;
 };
 
@@ -59,12 +59,12 @@ class WebSocketParser
   WebSocketParser();
   virtual ~WebSocketParser();
 
-  void addStreamData(const char* data, uint16_t len);
+  void addStreamData(const char* data, unsigned int len);
   WebSocketFrame* getNextFrame();
 
  private:
   char* mData;
-  uint16_t mLength;
+  unsigned int mLength;
   bool mHeaderHandled;
   FrameType mLastFrameType;
 };
