@@ -5,7 +5,7 @@
 
 #include "websocket.h"
 
-WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mSummary(NULL) {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSummary(NULL) {
 }
 
 WebSocketFrame::~WebSocketFrame() {
@@ -21,9 +21,15 @@ WebSocketFrame::getData() {
   return mData;
 }
 
+uint16_t
+WebSocketFrame::getDataLength() {
+  return mDataLength;
+}
+
 void
-WebSocketFrame::setData(const char* data) {
+WebSocketFrame::setData(const char* data, uint16_t len) {
   mData = data;
+  mDataLength = len;
 }
 
 const char*
@@ -84,6 +90,11 @@ WebSocketParser::~WebSocketParser() {
 
 void
 WebSocketParser::addStreamData(const char* data, uint16_t len) {
+  if (strncmp(data, "GET /", 5) == 0
+      || strncmp(data, "HTTP", 4) == 0) {
+    mHeaderHandled = false;
+  }
+
   mData = (char*) realloc(mData, mLength + len);
   memcpy(mData + mLength, data, len);
   mLength += len;
@@ -107,7 +118,7 @@ WebSocketParser::getNextFrame() {
       mHeaderHandled = true;
 
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
-      frame->setData("HEADER DATA");
+      frame->setData("HEADER DATA", 12);
       frame->setSummary("HEADER");
       return frame;
     }
@@ -118,7 +129,8 @@ WebSocketParser::getNextFrame() {
     uint16_t frameHeader = *((uint16_t*) mData);
     uint8_t frameFlags = (frameHeader & 0xf0) >> 4;
     FrameType frameType = static_cast<FrameType>(frameHeader & 0x0f);
-    uint64_t payloadLength = (frameHeader & 0xff00) >> 8;
+    uint8_t frameMasked = (frameHeader & 0x8000) >> 15;
+    uint64_t payloadLength = (frameHeader & 0x7f00) >> 8;
 
     if (payloadLength == 126) {
       payloadLength = ntohs(*((uint16_t*) (mData + 2)));
@@ -127,6 +139,10 @@ WebSocketParser::getNextFrame() {
       payloadLength = ntohl(*((uint32_t*) (mData + 2)));
       payloadLength += ((uint64_t) ntohl(*((uint32_t*) (mData + 6)))) << 32;
       payloadHeaderLength += 10;
+    }
+
+    if (frameMasked == 1) {
+      payloadHeaderLength += 4;
     }
 
     if (mLength >= payloadHeaderLength + payloadLength) {
@@ -165,7 +181,7 @@ WebSocketParser::getNextFrame() {
       }
 
       WebSocketFrame* frame = new WebSocketFrame(frameFlags, mLastFrameType);
-      frame->setData(payload);
+      frame->setData(payload, payloadLength);
       frame->setSummary(summary);
       return frame;
     }

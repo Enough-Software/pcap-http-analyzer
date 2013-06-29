@@ -23,7 +23,8 @@ class WebSocketFrame
   FrameType getType();
 
   const char* getData();
-  void setData(const char* data);
+  uint16_t getDataLength();
+  void setData(const char* data, uint16_t len);
 
   const char* getSummary();
   void setSummary(const char* summary);
@@ -34,6 +35,7 @@ class WebSocketFrame
   int mFlags;
   FrameType mType;
   const char* mData;
+  uint16_t mDataLength;
   const char* mSummary;
 };
 

@@ -243,6 +243,7 @@ void handleHttpResponse(const char* data, int len) {
 }
 
 static WebSocketParser* webSocketsIn[10];
+static WebSocketParser* webSocketsOut[10];
 static int numKnownParties = 0;
 static char* knownParties[10];
 
@@ -264,6 +265,7 @@ int getPartyIndex(const struct in_addr *ip_addr) {
     tmp_name[len] = '\0';
     knownParties[numKnownParties] = tmp_name;
     webSocketsIn[numKnownParties] = new WebSocketParser();
+    webSocketsOut[numKnownParties] = new WebSocketParser();
     foundIndex = numKnownParties;
     numKnownParties++;
   }
@@ -278,17 +280,19 @@ const char* getPartyName(int partyIndex) {
   return party_name;
 }
 
-void handleWebsocketNotification(struct timeval tv, int partyIndex, WebSocketParser* ws, const char* data, uint16_t len) {
+void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
-    printf(" %s << ", getPartyName(partyIndex));
-    printTimestamp(tv);
     printf("WS %s\n\n", frame->getSummary());
 
     if (PRINT_WS_DATA && frame->getType() == TEXT) {
-      printf("    %s\n\n", frame->getData());
+      if (frame->getDataLength() > 0) {
+	printf("    %s\n\n", frame->getData());
+      } else {
+	printf("    Empty frame\n\n");
+      }
 
 #ifdef ENABLE_JSON
       enum json_tokener_error jerr;
@@ -324,12 +328,13 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
   int partyIndex = getPartyIndex(ip_addr);
 
   if (is_incoming_ip_packet(ip)) {
+    printf(" %s << ", getPartyName(partyIndex));
+    printTimestamp(tv);
+
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
       WebSocketParser* ws = webSocketsIn[partyIndex];
-      handleWebsocketNotification(tv, partyIndex, ws, data, len);
+      handleWebsocketNotification(ws, data, len);
     } else {
-      printf(" %s << ", getPartyName(partyIndex));
-      printTimestamp(tv);
       handleHttpResponse(data, len);
     }
   } else {
@@ -337,10 +342,11 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
     printTimestamp(tv);
 
     if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
-      printf("WS ");
+      WebSocketParser* ws = webSocketsOut[partyIndex];
+      handleWebsocketNotification(ws, data, len);
+    } else {
+      handleHttpRequest(data, len);
     }
-
-    handleHttpRequest(data, len);
   }
 }
 
