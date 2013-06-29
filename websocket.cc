@@ -1,3 +1,9 @@
+/*
+  RFC 6455-compliant web socket parsing classes.
+
+  See http://tools.ietf.org/html/rfc6455
+*/
+
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
