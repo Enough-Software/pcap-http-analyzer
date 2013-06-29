@@ -77,7 +77,21 @@ struct nread_tcp {
   u_short th_urp; /* urgent pointer */
 };
 
+static long baseSeconds = 0;
+static int numKnownParties = 0;
+static char* knownParties[10];
+static WebSocketParser* webSocketsIn[10];
+static WebSocketParser* webSocketsOut[10];
+
 void dispatcherHandler(u_char *, const struct pcap_pkthdr *, const u_char *);
+
+void cleanup() {
+  for (int index = 0; index < numKnownParties; index++) {
+    free((void*) knownParties[index]);
+    delete webSocketsIn[index];
+    delete webSocketsOut[index];
+  }
+}
 
 int main(int argc, char** argv) {
   pcap_t *fp;
@@ -94,6 +108,8 @@ int main(int argc, char** argv) {
   }
 
   pcap_loop(fp, 0, dispatcherHandler, NULL);
+  pcap_close(fp);
+  cleanup();
   return 0;
 }
 
@@ -133,8 +149,6 @@ void printIndented(int indent, const char* str, int len) {
     printf("\n");
   }
 }
-
-static long baseSeconds = 0;
 
 void printTimestamp(struct timeval tv) {
   if (baseSeconds == 0) {
@@ -242,11 +256,6 @@ void handleHttpResponse(const char* data, int len) {
   }
 }
 
-static WebSocketParser* webSocketsIn[10];
-static WebSocketParser* webSocketsOut[10];
-static int numKnownParties = 0;
-static char* knownParties[10];
-
 int getPartyIndex(const struct in_addr *ip_addr) {
   char* ip_name = inet_ntoa((struct in_addr) *ip_addr);
   int foundIndex = -1;
@@ -305,6 +314,8 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
       }
 #endif /* ENABLE_JSON */
     }
+
+    delete frame;
   }
 }
 

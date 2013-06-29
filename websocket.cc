@@ -9,6 +9,9 @@ WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType
 }
 
 WebSocketFrame::~WebSocketFrame() {
+  if (mData) {
+    free((void*) mData);
+  }
 }
 
 FrameType
@@ -113,7 +116,7 @@ WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(fal
 
 WebSocketParser::~WebSocketParser() {
   if (mData) {
-    delete mData;
+    free((void*) mData);
   }
 }
 
@@ -148,7 +151,7 @@ WebSocketParser::getNextFrame() {
 
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
       frame->setSubject("HEADER");
-      frame->setData("HEADER DATA", 12);
+      frame->setData(strdup("HEADER DATA"), 12);
       return frame;
     }
   }
