@@ -3,7 +3,7 @@ INCLUDES=
 LDFLAGS=-lpcap
 PCAPFILE=test.pcapng
 PCAPFILE=test2.pcapng
-PCAPFILE=multi-test.pcapng
+PCAPFILE=tests/test.pcapng
 
 default: pcap_dump
 
