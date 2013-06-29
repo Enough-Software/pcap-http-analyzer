@@ -1,26 +1,21 @@
 CXXFLAGS=-g -O0 -Wall -Wextra -Werror -pedantic
 INCLUDES=
 LDFLAGS=-lpcap
-PCAPFILE=test.pcapng
-PCAPFILE=test2.pcapng
 PCAPFILE=tests/test.pcapng
+
+SOURCES:=$(wildcard *.cc)
+OBJECTS=$(SOURCES:.cc=.o)
 
 default: pcap_dump
 
 clean:
 	rm -f pcap_dump pcap_dump_static *.o
 
-main.o: main.cc
-	g++ $(CXXFLAGS) $(INCLUDES) -c main.cc
+.cc.o:
+	g++ $(CXXFLAGS) $(INCLUDES) -c $<
 
-websocket.o: websocket.cc
-	g++ $(CXXFLAGS) $(INCLUDES) -c websocket.cc
-
-commparty.o: commparty.cc
-	g++ $(CXXFLAGS) $(INCLUDES) -c commparty.cc
-
-pcap_dump: main.o websocket.o commparty.o
-	g++ -o pcap_dump main.o websocket.o commparty.o $(LDFLAGS)
+pcap_dump: $(OBJECTS)
+	g++ -o pcap_dump $(OBJECTS) $(LDFLAGS)
 
 pcap_dump_static: pcap_dump
 	g++ -static -o pcap_dump_static main.o websocket.o $(LDFLAGS)
