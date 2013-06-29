@@ -153,24 +153,16 @@ void print_json_object(json_object* jobj, int indent) {
   printIndent(indent);
   printf("{\n");
 
-  /*
   struct json_object_iterator it = json_object_iter_begin(jobj);
   struct json_object_iterator itEnd = json_object_iter_end(jobj);
 
   while (!json_object_iter_equal(&it, &itEnd)) {
     const char* keyName = json_object_iter_peek_name(&it);
-    print_indent(indent + 2);
+    printIndent(indent + 2);
     printf("%s:\n", keyName);
 
     json_object_iter_next(&it);
   }
-  */
-
-  /*
-  for (int index = 0; index < json_object_array_length(jobj), index++) {
-    const json_object* = json_object_array_get_idx(jobj, index);
-  }
-  */
 
   printIndent(indent);
   printf("}\n");
@@ -266,7 +258,7 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
       if ((jerr = json_tokener_get_error(tok)) == json_tokener_success) {
 	print_json_object(jobj, 4);
       } else {
-	print_packet_data(data + 4, len - 4);
+	PRINT_BUFFER(data + 4, len - 4);
       }
 #endif /* ENABLE_JSON */
     }
