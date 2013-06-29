@@ -277,7 +277,6 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
 
 void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
   uint16_t len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
-  const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
   if (len == 0) {
     return;
@@ -293,6 +292,7 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
 
   char* localHostname = inet_ntoa((struct in_addr) *ip_addr);
   CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
+  const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
   if (is_incoming_ip_packet(ip)) {
     printf(" %s << ", party->getName().c_str());
