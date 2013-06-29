@@ -26,21 +26,28 @@ class WebSocketFrame
   uint16_t getDataLength();
   void setData(const char* data, uint16_t len);
 
-  const char* getSummary();
-  void setSummary(const char* summary);
+  virtual const char* getSubject();
+  virtual void setSubject(const char* subject);
 
   static const char* typeAsString(FrameType type);
 
- private:
+ protected:
   int mFlags;
   FrameType mType;
   const char* mData;
   uint16_t mDataLength;
-  const char* mSummary;
+  const char* mSubject;
 };
 
-// TODO: Create class NotificationFrame
-//class NotificationFrame : WebSocketFrame
+class NotificationFrame : public WebSocketFrame
+{
+ public:
+  NotificationFrame(int flags);
+  virtual ~NotificationFrame();
+
+  virtual const char* getSubject();
+  virtual void setSubject(const char* subject);
+};
 
 class WebSocketParser
 {

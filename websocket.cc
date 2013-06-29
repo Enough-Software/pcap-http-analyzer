@@ -5,7 +5,7 @@
 
 #include "websocket.h"
 
-WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSummary(NULL) {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSubject(NULL) {
 }
 
 WebSocketFrame::~WebSocketFrame() {
@@ -33,13 +33,13 @@ WebSocketFrame::setData(const char* data, uint16_t len) {
 }
 
 const char*
-WebSocketFrame::getSummary() {
-  return mSummary;
+WebSocketFrame::getSubject() {
+  return mSubject;
 }
 
 void
-WebSocketFrame::setSummary(const char* summary) {
-  mSummary = summary;
+WebSocketFrame::setSubject(const char* subject) {
+  mSubject = subject;
 }
 
 const char*
@@ -77,6 +77,38 @@ WebSocketFrame::typeAsString(FrameType type) {
   }
 
   return str;
+}
+
+NotificationFrame::NotificationFrame(int flags) : WebSocketFrame(flags, TEXT) {
+}
+
+NotificationFrame::~NotificationFrame() {
+}
+
+const char*
+NotificationFrame::getSubject() {
+  char* type = "Unknown notification type";
+  const char* typeStart = strstr(mData, "\"type\":\"");
+  const char* typeEnd = NULL;
+
+  if (typeStart) {
+    typeStart = typeStart + 8;
+    typeEnd = strchr(typeStart, '\"');
+
+    if (typeEnd) {
+      int len = typeEnd - typeStart;
+      type = (char*) malloc(len + 1);
+      type[len] = '\0';
+      memcpy(type, typeStart, len);
+    }
+  }
+
+  return type;
+}
+
+void
+NotificationFrame::setSubject(const char*) {
+  // Do nothing here. Subject is automatically set and we dont want to overwrite it.
 }
 
 WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false), mLastFrameType(CONTINUATION) {
@@ -118,8 +150,8 @@ WebSocketParser::getNextFrame() {
       mHeaderHandled = true;
 
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
+      frame->setSubject("HEADER");
       frame->setData("HEADER DATA", 12);
-      frame->setSummary("HEADER");
       return frame;
     }
   }
@@ -159,30 +191,16 @@ WebSocketParser::getNextFrame() {
 	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
       }
 
-      char* summary = "Unknown notification type";
+      WebSocketFrame* frame;
 
       if (mLastFrameType == TEXT) {
-	const char* typeStart = strstr(payload, "\"type\":\"");
-	const char* typeEnd = NULL;
-
-	if (typeStart) {
-	  typeStart = typeStart + 8;
-	  typeEnd = strchr(typeStart, '\"');
-
-	  if (typeEnd) {
-	    int len = typeEnd - typeStart;
-	    summary = (char*) malloc(len + 1);
-	    summary[len] = '\0';
-	    memcpy(summary, typeStart, len);
-	  }
-	}
+	frame = new NotificationFrame(frameFlags);
       } else {
-	summary = (char*) WebSocketFrame::typeAsString(frameType);
+	frame = new WebSocketFrame(frameFlags, mLastFrameType);
+	frame->setSubject(WebSocketFrame::typeAsString(frameType));
       }
 
-      WebSocketFrame* frame = new WebSocketFrame(frameFlags, mLastFrameType);
       frame->setData(payload, payloadLength);
-      frame->setSummary(summary);
       return frame;
     }
   }

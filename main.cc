@@ -285,7 +285,7 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
-    printf("WS %s\n\n", frame->getSummary());
+    printf("WS %s\n\n", frame->getSubject());
 
     if (PRINT_WS_DATA && frame->getType() == TEXT) {
       if (frame->getDataLength() > 0) {
