@@ -11,6 +11,7 @@
 #include <json/json.h>
 #endif /* ENABLE_JSON */
 
+#include "commparty.h"
 #include "websocket.h"
 
 #define PORT_WEBSOCKET 8089
@@ -78,20 +79,8 @@ struct nread_tcp {
 };
 
 static long baseSeconds = 0;
-static int numKnownParties = 0;
-static char* knownParties[10];
-static WebSocketParser* webSocketsIn[10];
-static WebSocketParser* webSocketsOut[10];
 
 void dispatcherHandler(u_char *, const struct pcap_pkthdr *, const u_char *);
-
-void cleanup() {
-  for (int index = 0; index < numKnownParties; index++) {
-    free((void*) knownParties[index]);
-    delete webSocketsIn[index];
-    delete webSocketsOut[index];
-  }
-}
 
 int main(int argc, char** argv) {
   pcap_t *fp;
@@ -109,7 +98,6 @@ int main(int argc, char** argv) {
 
   pcap_loop(fp, 0, dispatcherHandler, NULL);
   pcap_close(fp);
-  cleanup();
   return 0;
 }
 
@@ -256,38 +244,6 @@ void handleHttpResponse(const char* data, int len) {
   }
 }
 
-int getPartyIndex(const struct in_addr *ip_addr) {
-  char* ip_name = inet_ntoa((struct in_addr) *ip_addr);
-  int foundIndex = -1;
-
-  for (int index = 0; index < numKnownParties; index++) {
-    if (strcmp(ip_name, knownParties[index]) == 0) {
-      foundIndex = index;
-      break;
-    }
-  }
-
-  if (foundIndex == -1 && numKnownParties < 10) {
-    int len = strlen(ip_name);
-    char* tmp_name = (char*) malloc(len + 1);
-    strncpy(tmp_name, ip_name, len);
-    tmp_name[len] = '\0';
-    knownParties[numKnownParties] = tmp_name;
-    webSocketsIn[numKnownParties] = new WebSocketParser();
-    webSocketsOut[numKnownParties] = new WebSocketParser();
-    foundIndex = numKnownParties;
-    numKnownParties++;
-  }
-
-  return foundIndex;
-}
-
-string getPartyName(int partyIndex) {
-  string name;
-  name = 'A' + partyIndex;
-  return name;
-}
-
 void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
   ws->addStreamData(data, len);
@@ -335,25 +291,24 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
     ip_addr = &(ip->ip_src);
   }
 
-  int partyIndex = getPartyIndex(ip_addr);
+  char* localHostname = inet_ntoa((struct in_addr) *ip_addr);
+  CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
 
   if (is_incoming_ip_packet(ip)) {
-    printf(" %s << ", getPartyName(partyIndex).c_str());
+    printf(" %s << ", party->getName().c_str());
     printTimestamp(tv);
 
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
-      WebSocketParser* ws = webSocketsIn[partyIndex];
-      handleWebsocketNotification(ws, data, len);
+      handleWebsocketNotification(party->getWebSocketParserIncoming(), data, len);
     } else {
       handleHttpResponse(data, len);
     }
   } else {
-    printf(" %s >> ", getPartyName(partyIndex).c_str());
+    printf(" %s >> ", party->getName().c_str());
     printTimestamp(tv);
 
     if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
-      WebSocketParser* ws = webSocketsOut[partyIndex];
-      handleWebsocketNotification(ws, data, len);
+      handleWebsocketNotification(party->getWebSocketParserOutgoing(), data, len);
     } else {
       handleHttpRequest(data, len);
     }
