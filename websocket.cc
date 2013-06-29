@@ -5,7 +5,7 @@
 
 #include "websocket.h"
 
-WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSubject(NULL) {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSubject("No subject") {
 }
 
 WebSocketFrame::~WebSocketFrame() {
@@ -32,19 +32,19 @@ WebSocketFrame::setData(const char* data, uint16_t len) {
   mDataLength = len;
 }
 
-const char*
+string
 WebSocketFrame::getSubject() {
   return mSubject;
 }
 
 void
-WebSocketFrame::setSubject(const char* subject) {
+WebSocketFrame::setSubject(string subject) {
   mSubject = subject;
 }
 
-const char*
+string
 WebSocketFrame::typeAsString(FrameType type) {
-  const char* str;
+  string str;
 
   switch (type) {
   case CONTINUATION:
@@ -85,21 +85,18 @@ NotificationFrame::NotificationFrame(int flags) : WebSocketFrame(flags, TEXT) {
 NotificationFrame::~NotificationFrame() {
 }
 
-const char*
+string
 NotificationFrame::getSubject() {
-  char* type = "Unknown notification type";
-  const char* typeStart = strstr(mData, "\"type\":\"");
-  const char* typeEnd = NULL;
+  string type("Unknown notification type");
+  string dataStr(mData, mDataLength);
+  int posStart = dataStr.find("\"type\":\"");
 
-  if (typeStart) {
-    typeStart = typeStart + 8;
-    typeEnd = strchr(typeStart, '\"');
+  if (posStart >= 0) {
+    posStart += 8;
+    int posEnd = dataStr.find("\"", posStart + 1);
 
-    if (typeEnd) {
-      int len = typeEnd - typeStart;
-      type = (char*) malloc(len + 1);
-      type[len] = '\0';
-      memcpy(type, typeStart, len);
+    if (posEnd >= 0) {
+      type = dataStr.substr(posStart, posEnd - posStart);
     }
   }
 
@@ -107,7 +104,7 @@ NotificationFrame::getSubject() {
 }
 
 void
-NotificationFrame::setSubject(const char*) {
+NotificationFrame::setSubject(string) {
   // Do nothing here. Subject is automatically set and we dont want to overwrite it.
 }
 

@@ -1,6 +1,10 @@
 #ifndef __WEBSOCKET_H__
 #define __WEBSOCKET_H__
 
+#include <string>
+
+using namespace std;
+
 enum FrameType {
   UNKNOWN = -1,
   // Non-control frames:
@@ -26,17 +30,17 @@ class WebSocketFrame
   uint16_t getDataLength();
   void setData(const char* data, uint16_t len);
 
-  virtual const char* getSubject();
-  virtual void setSubject(const char* subject);
+  virtual string getSubject();
+  virtual void setSubject(string subject);
 
-  static const char* typeAsString(FrameType type);
+  static string typeAsString(FrameType type);
 
  protected:
   int mFlags;
   FrameType mType;
   const char* mData;
   uint16_t mDataLength;
-  const char* mSubject;
+  string mSubject;
 };
 
 class NotificationFrame : public WebSocketFrame
@@ -45,8 +49,8 @@ class NotificationFrame : public WebSocketFrame
   NotificationFrame(int flags);
   virtual ~NotificationFrame();
 
-  virtual const char* getSubject();
-  virtual void setSubject(const char* subject);
+  virtual string getSubject();
+  virtual void setSubject(string subject);
 };
 
 class WebSocketParser

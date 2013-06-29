@@ -273,11 +273,10 @@ int getPartyIndex(const struct in_addr *ip_addr) {
   return foundIndex;
 }
 
-const char* getPartyName(int partyIndex) {
-  char* party_name = (char*) malloc(2);
-  party_name[0] = 'A' + partyIndex;
-  party_name[1] = '\0';
-  return party_name;
+string getPartyName(int partyIndex) {
+  string name;
+  name = 'A' + partyIndex;
+  return name;
 }
 
 void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
@@ -285,7 +284,7 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
-    printf("WS %s\n\n", frame->getSubject());
+    printf("WS %s\n\n", frame->getSubject().c_str());
 
     if (PRINT_WS_DATA && frame->getType() == TEXT) {
       if (frame->getDataLength() > 0) {
@@ -328,7 +327,7 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
   int partyIndex = getPartyIndex(ip_addr);
 
   if (is_incoming_ip_packet(ip)) {
-    printf(" %s << ", getPartyName(partyIndex));
+    printf(" %s << ", getPartyName(partyIndex).c_str());
     printTimestamp(tv);
 
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
@@ -338,7 +337,7 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
       handleHttpResponse(data, len);
     }
   } else {
-    printf(" %s >> ", getPartyName(partyIndex));
+    printf(" %s >> ", getPartyName(partyIndex).c_str());
     printTimestamp(tv);
 
     if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
