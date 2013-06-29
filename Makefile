@@ -16,8 +16,11 @@ main.o: main.cc
 websocket.o: websocket.cc
 	g++ $(CXXFLAGS) $(INCLUDES) -c websocket.cc
 
-pcap_dump: main.o websocket.o
-	g++ -o pcap_dump main.o websocket.o $(LDFLAGS)
+commparty.o: commparty.cc
+	g++ $(CXXFLAGS) $(INCLUDES) -c commparty.cc
+
+pcap_dump: main.o websocket.o commparty.o
+	g++ -o pcap_dump main.o websocket.o commparty.o $(LDFLAGS)
 
 pcap_dump_static: pcap_dump
 	g++ -static -o pcap_dump_static main.o websocket.o $(LDFLAGS)
