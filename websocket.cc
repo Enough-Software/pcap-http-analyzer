@@ -117,7 +117,7 @@ NotificationFrame::setSubject(string) {
   // Do nothing here. Subject is automatically set and we dont want to overwrite it.
 }
 
-WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false), mLastFrameType(CONTINUATION) {
+WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false), mLastFrameType(UNKNOWN) {
 }
 
 WebSocketParser::~WebSocketParser() {
