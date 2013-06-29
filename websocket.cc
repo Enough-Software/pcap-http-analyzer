@@ -4,12 +4,12 @@
   See http://tools.ietf.org/html/rfc6455
 */
 
+#include "websocket.h"
+
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "websocket.h"
 
 WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSubject("No subject") {
 }
