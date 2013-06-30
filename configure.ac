@@ -2,6 +2,8 @@ AC_INIT([pcap_dump],[0.1])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_LN_S
+AC_PROG_RANLIB
 AC_CHECK_HEADER_STDBOOL
 AC_CHECK_FUNCS([inet_ntoa memmove strchr strdup strstr])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h])
