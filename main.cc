@@ -7,11 +7,8 @@
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
 
-#ifdef ENABLE_JSON
-#include <json/json.h>
-#endif /* ENABLE_JSON */
-
 #include "commparty.h"
+#include "print.h"
 #include "websocket.h"
 
 #define PORT_WEBSOCKET 8089
@@ -20,16 +17,6 @@
 #define PRINT_HTTP_RESPONSE_HEADER 1
 #define PRINT_HTTP_RESPONSE_BODY 1
 #define PRINT_WS_DATA 1
-
-#define PRINT_BUFFER(data, len) {		\
-    int buflen = len;				\
-    if (buflen < 0) buflen = 0;			\
-    char* buffer = (char*) malloc(buflen + 1);	\
-    buffer[buflen] = '\0';				\
-    strncpy(buffer, data, buflen);			\
-    printf("%s", buffer);			\
-    free(buffer);				\
-}
 
 typedef u_int32_t tcp_seq;
 
@@ -106,38 +93,6 @@ int is_incoming_ip_packet(const struct nread_ip* ip) {
   return memcmp(&(ip->ip_src), &local_network, 3) != 0;
 }
 
-void printIndent(int indent) {
-  for (int index = 0; index < indent; index++) {
-    printf(" ");
-  }
-}
-
-void printIndented(int indent, const char* str, int len) {
-  const char* tmp = str;
-
-  while (len > 0) {
-    const char* rPos = strchr(tmp, '\r');
-    const char* nPos = strchr(tmp, '\n');
-    printIndent(indent);
-
-    if (nPos != NULL && (nPos - tmp) < len) {
-      if (rPos != NULL && rPos < nPos) {
-	PRINT_BUFFER(tmp, rPos - tmp);
-      } else {
-	PRINT_BUFFER(tmp, nPos - tmp);
-      }
-
-      len -= nPos - tmp + 1;
-      tmp = nPos + 1;
-    } else {
-      PRINT_BUFFER(tmp, len);
-      len = 0;
-    }
-
-    printf("\n");
-  }
-}
-
 void printTimestamp(struct timeval tv) {
   if (baseSeconds == 0) {
     baseSeconds = tv.tv_sec;
@@ -146,29 +101,6 @@ void printTimestamp(struct timeval tv) {
   long seconds = tv.tv_sec - baseSeconds;
   printf("%02ld:%02ld:%02ld.%06ld ", seconds / 3600, (seconds / 60) % 60, seconds % 60, tv.tv_usec);
 }
-
-#ifdef ENABLE_JSON
-
-void print_json_object(json_object* jobj, int indent) {
-  printIndent(indent);
-  printf("{\n");
-
-  struct json_object_iterator it = json_object_iter_begin(jobj);
-  struct json_object_iterator itEnd = json_object_iter_end(jobj);
-
-  while (!json_object_iter_equal(&it, &itEnd)) {
-    const char* keyName = json_object_iter_peek_name(&it);
-    printIndent(indent + 2);
-    printf("%s:\n", keyName);
-
-    json_object_iter_next(&it);
-  }
-
-  printIndent(indent);
-  printf("}\n");
-}
-
-#endif /* ENABLE_JSON */
 
 void printHttpRequestTitle(const char* data, int /* len */) {
   const char* eol_char = strchr(data, '\r');
@@ -236,6 +168,28 @@ void handleHttpResponse(const char* data, int len) {
   }
 }
 
+#ifdef ENABLE_JSON
+
+bool parseJson(const char* data, uint16_t len) {
+  GError* error = NULL;
+  bool result = false;
+  JsonParser* parser = json_parser_new();
+  json_parser_load_from_data(parser, data, len, &error);
+
+  if (error) {
+    g_error_free(error);
+  } else {
+    result = true;
+    JsonNode* root = json_parser_get_root(parser);
+    printJson(json_node_get_object(root));
+  }
+
+  g_object_unref(parser);
+  return result;
+}
+
+#endif /* ENABLE_JSON */
+
 void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
   ws->addStreamData(data, len);
@@ -245,22 +199,16 @@ void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t
 
     if (PRINT_WS_DATA && frame->getType() == TEXT) {
       if (frame->getDataLength() > 0) {
-	printf("    %s\n\n", frame->getData());
+#ifdef ENABLE_JSON
+	if (!parseJson(data + 4, len - 4)) {
+#endif /* ENABLE_JSON */
+	  printf("    %s\n\n", frame->getData());
+#ifdef ENABLE_JSON
+	}
+#endif /* ENABLE_JSON */
       } else {
 	printf("    Empty frame\n\n");
       }
-
-#ifdef ENABLE_JSON
-      enum json_tokener_error jerr;
-      json_tokener* tok = json_tokener_new();
-      json_object* jobj = json_tokener_parse_ex(tok, data + 4, len - 4);
-
-      if ((jerr = json_tokener_get_error(tok)) == json_tokener_success) {
-	print_json_object(jobj, 4);
-      } else {
-	PRINT_BUFFER(data + 4, len - 4);
-      }
-#endif /* ENABLE_JSON */
     }
 
     delete frame;
