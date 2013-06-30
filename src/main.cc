@@ -118,16 +118,17 @@ void printTimestamp(struct timeval tv) {
 }
 
 void printHttpRequestTitle(const char* data, int /* len */) {
+  printf("ht ");
   const char* eol_char = strchr(data, '\r');
 
   if (!eol_char) {
-    printf("DATA\n\n");
+    printf("DATA\n");
     return;
   }
 
   int eol = eol_char - data;
   PRINT_BUFFER(data, eol);
-  printf("\n\n");
+  printf("\n");
 }
 
 void handleHttpRequest(const char* data, int len) {
@@ -138,15 +139,23 @@ void handleHttpRequest(const char* data, int len) {
   } else if (len > 10 && strncmp(data, "PUT ", 4) == 0) {
     printHttpRequestTitle(data, len);
   } else {
-    printf("DATA\n\n");
+    printf("ht DATA\n");
   }
 
   if (PRINT_HTTP_REQUEST_HEADER) {
-    printIndented(4, data, len);
+    printf("\n");
 
-    if (data[len - 1] != '\n') {
-      printf("\n");
+#ifdef ENABLE_JSON
+    if (data[0] != '{' || !parseJson(data, len)) {
+#endif /* ENABLE_JSON */
+      printIndented(4, data, len);
+
+      if (data[len - 1] != '\n') {
+	printf("\n");
+      }
+#ifdef ENABLE_JSON
     }
+#endif /* ENABLE_JSON */
   }
 }
 
@@ -154,10 +163,11 @@ void handleHttpResponse(const char* data, int len) {
   if (len > 10 && strncmp(data, "HTTP/1.1", 8) == 0) {
     printHttpRequestTitle(data, len);
   } else {
-    printf("DATA\n\n");
+    printf("DATA\n");
   }
 
   if (PRINT_HTTP_RESPONSE_HEADER || PRINT_HTTP_RESPONSE_BODY) {
+    printf("\n");
     const char* bodySeparator = strstr(data, "\r\n\r\n");
 
     if (bodySeparator) {
@@ -170,8 +180,16 @@ void handleHttpResponse(const char* data, int len) {
 
       if (PRINT_HTTP_RESPONSE_BODY) {
 	if (bodyLength > 0) {
-	  printIndented(4, bodySeparator + 4, bodyLength);
-	  printf("\n");
+	  const char* body = bodySeparator + 4;
+
+#ifdef ENABLE_JSON
+	  if (!parseJson(body, bodyLength)) {
+#endif /* ENABLE_JSON */
+	    printIndented(4, body, bodyLength);
+	    printf("\n");
+#ifdef ENABLE_JSON
+	  }
+#endif /* ENABLE_JSON */
 	} else {
 	  printIndented(4, "Empty body\n\n", 12);
 	}
@@ -183,24 +201,37 @@ void handleHttpResponse(const char* data, int len) {
   }
 }
 
-void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
+void printPacketInfo(string partyName, bool isIncoming, struct timeval tv) {
+  printf(" %s %s ", partyName.c_str(), isIncoming ? "<<" : ">>");
+  printTimestamp(tv);
+}
+
+void handleWebsocketNotification(string partyName, bool isIncoming, struct timeval tv, WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
   ws->addStreamData(data, len);
 
   while ((frame = ws->getNextFrame()) != NULL) {
-    printf("WS %s\n\n", frame->getSubject().c_str());
+    printPacketInfo(partyName, isIncoming, tv);
+    printf("ws %s\n", frame->getSubject().c_str());
 
-    if (PRINT_WS_DATA && frame->getType() == TEXT) {
-      if (frame->getDataLength() > 0) {
+    if (PRINT_WS_DATA) {
+      printf("\n");
+
+      if (frame->getType() == TEXT) {
+	if (frame->getDataLength() > 0) {
 #ifdef ENABLE_JSON
-	if (!parseJson(data + 4, len - 4)) {
-#endif /* ENABLE_JSON */
+	  if (!parseJson(frame->getData(), frame->getDataLength())) {
+	    printf("    %s (FAILED TO PARSE)\n\n", frame->getData());
+	  }
+#else /* ENABLE_JSON */
 	  printf("    %s\n\n", frame->getData());
-#ifdef ENABLE_JSON
-	}
 #endif /* ENABLE_JSON */
+	} else {
+	  printf("    Empty frame\n\n");
+	}
       } else {
-	printf("    Empty frame\n\n");
+	printIndented(4, frame->getData(), frame->getDataLength());
+	printf("\n");
       }
     }
 
@@ -228,21 +259,17 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
   if (is_incoming_ip_packet(ip)) {
-    printf(" %s << ", party->getName().c_str());
-    printTimestamp(tv);
-
     if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
-      handleWebsocketNotification(party->getWebSocketParserIncoming(), data, len);
+      handleWebsocketNotification(party->getName(), true, tv, party->getWebSocketParserIncoming(), data, len);
     } else {
+      printPacketInfo(party->getName(), true, tv);
       handleHttpResponse(data, len);
     }
   } else {
-    printf(" %s >> ", party->getName().c_str());
-    printTimestamp(tv);
-
     if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
-      handleWebsocketNotification(party->getWebSocketParserOutgoing(), data, len);
+      handleWebsocketNotification(party->getName(), false, tv, party->getWebSocketParserOutgoing(), data, len);
     } else {
+      printPacketInfo(party->getName(), false, tv);
       handleHttpRequest(data, len);
     }
   }
