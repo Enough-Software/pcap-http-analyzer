@@ -11,7 +11,13 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
-PKG_CHECK_MODULES([JSON], [json-glib-1.0 >= 0.14])
+AH_TEMPLATE([ENABLE_JSON], [Define to one if JSON support is enabled.])
+AC_ARG_ENABLE(json,
+  [  --enable-json           Enables JSON parsing and pretty output. Needs json-glib-1.0.],
+  [
+    PKG_CHECK_MODULES([JSON], [json-glib-1.0 >= 0.14])
+    AC_DEFINE([ENABLE_JSON], [1], [])
+  ])
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES(Makefile)

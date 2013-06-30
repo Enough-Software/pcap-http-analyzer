@@ -7,6 +7,10 @@
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include "commparty.h"
 #include "print.h"
 #include "websocket.h"
