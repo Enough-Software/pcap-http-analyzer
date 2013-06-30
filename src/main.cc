@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
+#include <getopt.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -268,6 +269,11 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
   }
 }
 
+void printUsage(string programName) {
+  fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
+  exit(1);
+}
+
 void handlePcapFile(string filename) {
   pcap_t *fp;
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -282,11 +288,33 @@ void handlePcapFile(string filename) {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    fprintf(stderr, "\nUsage: %s filename", argv[0]);
-    return -1;
+  static struct option long_options[] = {
+    { 0, 0, 0, 0 }
+  };
+
+  while (1) {
+    int option_index = 0;
+    int c = getopt_long(argc, argv, "", long_options, &option_index);
+
+    if (c == -1) {
+      break;
+    }
+
+    switch (c) {
+
+    default:
+      printUsage(argv[0]);
+      break;
+    }
   }
 
-  handlePcapFile(argv[1]);
+  if (optind < argc) {
+    while (optind < argc) {
+      handlePcapFile(argv[optind++]);
+    }
+  } else {
+    printUsage(argv[0]);
+  }
+
   return 0;
 }
