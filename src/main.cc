@@ -70,6 +70,7 @@ struct nread_tcp {
 };
 
 static long baseSeconds = 0;
+static long baseMicroSeconds = 0;
 
 void dispatcherHandler(u_char *, const struct pcap_pkthdr *, const u_char *);
 
@@ -100,10 +101,18 @@ int is_incoming_ip_packet(const struct nread_ip* ip) {
 void printTimestamp(struct timeval tv) {
   if (baseSeconds == 0) {
     baseSeconds = tv.tv_sec;
+    baseMicroSeconds = tv.tv_usec;
   }
 
   long seconds = tv.tv_sec - baseSeconds;
-  printf("%02ld:%02ld:%02ld.%06ld ", seconds / 3600, (seconds / 60) % 60, seconds % 60, tv.tv_usec);
+  long microSeconds = tv.tv_usec - baseMicroSeconds;
+
+  if (microSeconds < 0) {
+    microSeconds += 1000000;
+    seconds--;
+  }
+
+  printf("%02ld:%02ld:%02ld.%06ld ", (seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60, microSeconds);
 }
 
 void printHttpRequestTitle(const char* data, int /* len */) {
