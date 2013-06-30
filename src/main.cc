@@ -77,6 +77,28 @@ int is_incoming_ip_packet(const struct nread_ip* ip) {
   return memcmp(&(ip->ip_src), &local_network, 3) != 0;
 }
 
+#ifdef ENABLE_JSON
+
+bool parseJson(const char* data, uint16_t len) {
+  GError* error = NULL;
+  bool result = false;
+  JsonParser* parser = json_parser_new();
+  json_parser_load_from_data(parser, data, len, &error);
+
+  if (error) {
+    g_error_free(error);
+  } else {
+    result = true;
+    JsonNode* root = json_parser_get_root(parser);
+    printJson(json_node_get_object(root));
+  }
+
+  g_object_unref(parser);
+  return result;
+}
+
+#endif /* ENABLE_JSON */
+
 void printTimestamp(struct timeval tv) {
   if (baseSeconds == 0) {
     baseSeconds = tv.tv_sec;
@@ -159,28 +181,6 @@ void handleHttpResponse(const char* data, int len) {
     }
   }
 }
-
-#ifdef ENABLE_JSON
-
-bool parseJson(const char* data, uint16_t len) {
-  GError* error = NULL;
-  bool result = false;
-  JsonParser* parser = json_parser_new();
-  json_parser_load_from_data(parser, data, len, &error);
-
-  if (error) {
-    g_error_free(error);
-  } else {
-    result = true;
-    JsonNode* root = json_parser_get_root(parser);
-    printJson(json_node_get_object(root));
-  }
-
-  g_object_unref(parser);
-  return result;
-}
-
-#endif /* ENABLE_JSON */
 
 void handleWebsocketNotification(WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
