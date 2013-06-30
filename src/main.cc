@@ -66,6 +66,7 @@ struct nread_tcp {
 };
 
 static int flag_short = 0;
+static int flag_stopwatch = 0;
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 
@@ -102,12 +103,17 @@ void printTimestamp(struct timeval tv) {
     baseMicroSeconds = tv.tv_usec;
   }
 
-  long seconds = tv.tv_sec - baseSeconds;
-  long microSeconds = tv.tv_usec - baseMicroSeconds;
+  long seconds = tv.tv_sec;
+  long microSeconds = tv.tv_usec;
 
-  if (microSeconds < 0) {
-    microSeconds += 1000000;
-    seconds--;
+  if (flag_stopwatch) {
+    if (microSeconds < 0) {
+      microSeconds += 1000000;
+      seconds--;
+    }
+
+    seconds -= baseSeconds;
+    microSeconds -= baseMicroSeconds;
   }
 
   printf("%02ld:%02ld:%02ld.%06ld ", (seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60, microSeconds);
@@ -295,6 +301,7 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
 void printUsage(string programName) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
   fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
+  fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
   exit(1);
 }
 
@@ -314,12 +321,13 @@ void handlePcapFile(string filename) {
 int main(int argc, char** argv) {
   static struct option long_options[] = {
     { "short",     no_argument,       0, 's'},
+    { "stopwatch", no_argument,       0, '0'},
     { 0, 0, 0, 0 }
   };
 
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "s", long_options, &option_index);
+    int c = getopt_long(argc, argv, "s0", long_options, &option_index);
 
     if (c == -1) {
       break;
@@ -330,6 +338,9 @@ int main(int argc, char** argv) {
       flag_short = 1;
       break;
 
+    case '0':
+      flag_stopwatch = 1;
+      break;
 
     default:
       printUsage(argv[0]);
