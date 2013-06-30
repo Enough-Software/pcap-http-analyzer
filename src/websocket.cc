@@ -148,6 +148,13 @@ WebSocketParser::getNextFrame() {
     char* pos = strstr(mData, "\r\n\r\n");
 
     if (pos) {
+      char* data = (char*) malloc(mLength);
+      memcpy(data, mData, pos - mData);
+
+      WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
+      frame->setSubject("HEADER");
+      frame->setData(data, pos - mData);
+
       unsigned int len = pos - mData + 4;
 
       if (mLength > len) {
@@ -158,10 +165,6 @@ WebSocketParser::getNextFrame() {
       }
 
       mHeaderHandled = true;
-
-      WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
-      frame->setSubject("HEADER");
-      frame->setData(strdup("HEADER DATA"), 12);
       return frame;
     }
   }
