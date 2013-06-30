@@ -1,0 +1,3 @@
+pcap-http-analyzer is a small utility to convert packet capture files from
+tcpdump/wireshark and to convert them into an easily readable textual
+log file. pcap-http-analyzer supports HTTP and WebSocket (RFC 6455) traffic.
