@@ -17,11 +17,6 @@
 #include "websocket.h"
 
 #define PORT_WEBSOCKET 8089
-#define PRINT_HTTP_REQUEST_HEADER 1
-#define PRINT_HTTP_REQUEST_BODY 1
-#define PRINT_HTTP_RESPONSE_HEADER 1
-#define PRINT_HTTP_RESPONSE_BODY 1
-#define PRINT_WS_DATA 1
 
 typedef u_int32_t tcp_seq;
 
@@ -70,6 +65,7 @@ struct nread_tcp {
   u_short th_urp; /* urgent pointer */
 };
 
+static int flag_short = 0;
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 
@@ -142,7 +138,7 @@ void handleHttpRequest(const char* data, int len) {
     printf("ht DATA\n");
   }
 
-  if (PRINT_HTTP_REQUEST_HEADER) {
+  if (!flag_short) {
     printf("\n");
 
 #ifdef ENABLE_JSON
@@ -166,19 +162,19 @@ void handleHttpResponse(const char* data, int len) {
     printf("DATA\n");
   }
 
-  if (PRINT_HTTP_RESPONSE_HEADER || PRINT_HTTP_RESPONSE_BODY) {
+  if (!flag_short) {
     printf("\n");
     const char* bodySeparator = strstr(data, "\r\n\r\n");
 
     if (bodySeparator) {
-      if (PRINT_HTTP_RESPONSE_HEADER) {
+      if (!flag_short) {
 	printIndented(4, data, bodySeparator - data);
 	printf("\n");
       }
 
       int bodyLength = len - (bodySeparator - data + 4);
 
-      if (PRINT_HTTP_RESPONSE_BODY) {
+      if (!flag_short) {
 	if (bodyLength > 0) {
 	  const char* body = bodySeparator + 4;
 
@@ -214,7 +210,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
     printPacketInfo(partyName, isIncoming, tv);
     printf("ws %s\n", frame->getSubject().c_str());
 
-    if (PRINT_WS_DATA) {
+    if (!flag_short) {
       printf("\n");
 
       if (frame->getType() == TEXT) {
@@ -298,6 +294,7 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
 
 void printUsage(string programName) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
+  fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
   exit(1);
 }
 
@@ -316,18 +313,23 @@ void handlePcapFile(string filename) {
 
 int main(int argc, char** argv) {
   static struct option long_options[] = {
+    { "short",     no_argument,       0, 's'},
     { 0, 0, 0, 0 }
   };
 
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "", long_options, &option_index);
+    int c = getopt_long(argc, argv, "s", long_options, &option_index);
 
     if (c == -1) {
       break;
     }
 
     switch (c) {
+    case 's':
+      flag_short = 1;
+      break;
+
 
     default:
       printUsage(argv[0]);
