@@ -268,21 +268,25 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
   }
 }
 
-int main(int argc, char** argv) {
+void handlePcapFile(string filename) {
   pcap_t *fp;
   char errbuf[PCAP_ERRBUF_SIZE];
 
+  if ((fp = pcap_open_offline(filename.c_str(), errbuf)) == NULL) {
+    fprintf(stderr, "Error opening dump file: %s\n", filename.c_str());
+    exit(1);
+  }
+
+  pcap_loop(fp, 0, dispatcherHandler, NULL);
+  pcap_close(fp);
+}
+
+int main(int argc, char** argv) {
   if (argc != 2) {
     fprintf(stderr, "\nUsage: %s filename", argv[0]);
     return -1;
   }
 
-  if ((fp = pcap_open_offline(argv[1], errbuf)) == NULL) {
-    fprintf(stderr, "\bError opening dump file\n");
-    return -1;
-  }
-
-  pcap_loop(fp, 0, dispatcherHandler, NULL);
-  pcap_close(fp);
+  handlePcapFile(argv[1]);
   return 0;
 }
