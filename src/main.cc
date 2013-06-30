@@ -72,27 +72,6 @@ struct nread_tcp {
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 
-void dispatcherHandler(u_char *, const struct pcap_pkthdr *, const u_char *);
-
-int main(int argc, char** argv) {
-  pcap_t *fp;
-  char errbuf[PCAP_ERRBUF_SIZE];
-
-  if (argc != 2) {
-    fprintf(stderr, "\nUsage: %s filename", argv[0]);
-    return -1;
-  }
-
-  if ((fp = pcap_open_offline(argv[1], errbuf)) == NULL) {
-    fprintf(stderr, "\bError opening dump file\n");
-    return -1;
-  }
-
-  pcap_loop(fp, 0, dispatcherHandler, NULL);
-  pcap_close(fp);
-  return 0;
-}
-
 int is_incoming_ip_packet(const struct nread_ip* ip) {
   u_int32_t local_network = 0x0002A8C0;
   return memcmp(&(ip->ip_src), &local_network, 3) != 0;
@@ -289,3 +268,21 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
   }
 }
 
+int main(int argc, char** argv) {
+  pcap_t *fp;
+  char errbuf[PCAP_ERRBUF_SIZE];
+
+  if (argc != 2) {
+    fprintf(stderr, "\nUsage: %s filename", argv[0]);
+    return -1;
+  }
+
+  if ((fp = pcap_open_offline(argv[1], errbuf)) == NULL) {
+    fprintf(stderr, "\bError opening dump file\n");
+    return -1;
+  }
+
+  pcap_loop(fp, 0, dispatcherHandler, NULL);
+  pcap_close(fp);
+  return 0;
+}
