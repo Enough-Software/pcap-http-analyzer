@@ -5,7 +5,7 @@ AC_PROG_CXX
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_CHECK_HEADER_STDBOOL
-AC_CHECK_FUNCS([inet_ntoa memmove strchr strdup strstr])
+AC_CHECK_FUNCS([inet_ntoa memmove strchr strdup strstr strtoul])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h])
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
