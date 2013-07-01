@@ -7,6 +7,8 @@
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
 #include <getopt.h>
+#include <set>
+#include <sstream>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -16,7 +18,7 @@
 #include "print.h"
 #include "websocket.h"
 
-#define PORT_WEBSOCKET 8089
+using namespace std;
 
 typedef u_int32_t tcp_seq;
 
@@ -69,6 +71,7 @@ static int flag_short = 0;
 static int flag_stopwatch = 0;
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
+static set<unsigned short> webSocketPorts;
 
 int is_incoming_ip_packet(const struct nread_ip* ip) {
   u_int32_t local_network = 0x0002A8C0;
@@ -241,6 +244,22 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
   }
 }
 
+void parseWebSocketPorts(string webSocketList) {
+  webSocketPorts.clear();
+
+  string item;
+  stringstream ss(webSocketList);
+
+  while (getline(ss, item, ',')) {
+    unsigned short port = strtoul(item.c_str(), NULL, 0);
+    webSocketPorts.insert(port);
+  }
+}
+
+bool isWebSocket(unsigned short port) {
+  return webSocketPorts.find(port) != webSocketPorts.end();
+}
+
 void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
   uint16_t len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
 
@@ -261,14 +280,14 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
   if (is_incoming_ip_packet(ip)) {
-    if (ntohs(tcp->th_sport) == PORT_WEBSOCKET) {
+    if (isWebSocket(ntohs(tcp->th_sport))) {
       handleWebsocketNotification(party->getName(), true, tv, party->getWebSocketParserIncoming(), data, len);
     } else {
       printPacketInfo(party->getName(), true, tv);
       handleHttpResponse(data, len);
     }
   } else {
-    if (ntohs(tcp->th_dport) == PORT_WEBSOCKET) {
+    if (isWebSocket(ntohs(tcp->th_dport))) {
       handleWebsocketNotification(party->getName(), false, tv, party->getWebSocketParserOutgoing(), data, len);
     } else {
       printPacketInfo(party->getName(), false, tv);
@@ -302,6 +321,7 @@ void printUsage(string programName) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
   fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
   fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
+  fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
   exit(1);
 }
 
@@ -322,12 +342,13 @@ int main(int argc, char** argv) {
   static struct option long_options[] = {
     { "short",     no_argument,       0, 's'},
     { "stopwatch", no_argument,       0, '0'},
+    { "ws-ports",  required_argument, 0, 'w'},
     { 0, 0, 0, 0 }
   };
 
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "s0", long_options, &option_index);
+    int c = getopt_long(argc, argv, "sw:0", long_options, &option_index);
 
     if (c == -1) {
       break;
@@ -336,6 +357,10 @@ int main(int argc, char** argv) {
     switch (c) {
     case 's':
       flag_short = 1;
+      break;
+
+    case 'w':
+      parseWebSocketPorts(optarg);
       break;
 
     case '0':
