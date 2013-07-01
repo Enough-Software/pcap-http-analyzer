@@ -110,13 +110,13 @@ void printTimestamp(struct timeval tv) {
   long microSeconds = tv.tv_usec;
 
   if (flag_stopwatch) {
+    seconds -= baseSeconds;
+    microSeconds -= baseMicroSeconds;
+
     if (microSeconds < 0) {
       microSeconds += 1000000;
       seconds--;
     }
-
-    seconds -= baseSeconds;
-    microSeconds -= baseMicroSeconds;
   }
 
   printf("%02ld:%02ld:%02ld.%06ld ", (seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60, microSeconds);
