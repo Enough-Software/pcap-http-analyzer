@@ -73,9 +73,9 @@ static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 static set<unsigned short> webSocketPorts;
 
-int is_incoming_ip_packet(const struct nread_ip* ip) {
-  u_int32_t local_network = 0x0002A8C0;
-  return memcmp(&(ip->ip_src), &local_network, 3) != 0;
+int isIncomingIpPacket(const struct nread_ip* ip) {
+  u_int32_t localNetwork = 0x0000A8C0;
+  return memcmp(&(ip->ip_src), &localNetwork, 2) != 0;
 }
 
 #ifdef ENABLE_JSON
@@ -267,19 +267,12 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
     return;
   }
 
-  const struct in_addr* ip_addr;
-
-  if (is_incoming_ip_packet(ip)) {
-    ip_addr = &(ip->ip_dst);
-  } else {
-    ip_addr = &(ip->ip_src);
-  }
-
-  string localHostname = inet_ntoa((struct in_addr) *ip_addr);
+  const struct in_addr* ipAddr = isIncomingIpPacket(ip) ? &(ip->ip_dst) : &(ip->ip_src);
+  string localHostname = inet_ntoa((struct in_addr) *ipAddr);
   CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
-  if (is_incoming_ip_packet(ip)) {
+  if (isIncomingIpPacket(ip)) {
     if (isWebSocket(ntohs(tcp->th_sport))) {
       handleWebsocketNotification(party->getName(), true, tv, party->getWebSocketParserIncoming(), data, len);
     } else {
