@@ -179,11 +179,8 @@ void handleHttpResponse(const char* data, int len) {
       if (!flag_short) {
 	printIndented(4, data, bodySeparator - data);
 	printf("\n");
-      }
+	int bodyLength = len - (bodySeparator - data + 4);
 
-      int bodyLength = len - (bodySeparator - data + 4);
-
-      if (!flag_short) {
 	if (bodyLength > 0) {
 	  const char* body = bodySeparator + 4;
 
