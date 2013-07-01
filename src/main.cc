@@ -80,7 +80,7 @@ int isIncomingIpPacket(const struct nread_ip* ip) {
 
 #ifdef ENABLE_JSON
 
-bool parseJson(const char* data, uint16_t len) {
+bool parseAndPrintJson(const char* data, uint16_t len) {
   GError* error = NULL;
   bool result = false;
   JsonParser* parser = json_parser_new();
@@ -151,7 +151,7 @@ void handleHttpRequest(const char* data, int len) {
     printf("\n");
 
 #ifdef ENABLE_JSON
-    if (data[0] != '{' || !parseJson(data, len)) {
+    if (data[0] != '{' || !parseAndPrintJson(data, len)) {
 #endif /* ENABLE_JSON */
       printIndented(4, data, len);
 
@@ -185,7 +185,7 @@ void handleHttpResponse(const char* data, int len) {
 	  const char* body = bodySeparator + 4;
 
 #ifdef ENABLE_JSON
-	  if (!parseJson(body, bodyLength)) {
+	  if (!parseAndPrintJson(body, bodyLength)) {
 #endif /* ENABLE_JSON */
 	    printIndented(4, body, bodyLength);
 	    printf("\n");
@@ -222,7 +222,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
       if (frame->getType() == TEXT) {
 	if (frame->getDataLength() > 0) {
 #ifdef ENABLE_JSON
-	  if (!parseJson(frame->getData(), frame->getDataLength())) {
+	  if (!parseAndPrintJson(frame->getData(), frame->getDataLength())) {
 	    printf("    %s (FAILED TO PARSE)\n\n", frame->getData());
 	  }
 #else /* ENABLE_JSON */
