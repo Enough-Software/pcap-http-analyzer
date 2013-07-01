@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(NULL), mDataLength(0), mSubject("No subject") {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(nullptr), mDataLength(0), mSubject("No subject") {
 }
 
 WebSocketFrame::~WebSocketFrame() {
@@ -121,7 +121,7 @@ NotificationFrame::setSubject(string) {
   // Do nothing here. Subject is automatically set and we dont want to overwrite it.
 }
 
-WebSocketParser::WebSocketParser() : mData(NULL), mLength(0), mHeaderHandled(false), mLastFrameType(UNKNOWN) {
+WebSocketParser::WebSocketParser() : mData(nullptr), mLength(0), mHeaderHandled(false), mLastFrameType(UNKNOWN) {
 }
 
 WebSocketParser::~WebSocketParser() {
@@ -218,5 +218,5 @@ WebSocketParser::getNextFrame() {
     }
   }
 
-  return NULL;
+  return nullptr;
 }

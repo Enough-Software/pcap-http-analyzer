@@ -212,7 +212,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
   WebSocketFrame* frame;
   ws->addStreamData(data, len);
 
-  while ((frame = ws->getNextFrame()) != NULL) {
+  while ((frame = ws->getNextFrame()) != nullptr) {
     printPacketInfo(partyName, isIncoming, tv);
     printf("ws %s\n", frame->getSubject().c_str());
 
