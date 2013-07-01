@@ -234,7 +234,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
 	} else {
 	  printf("    Empty frame\n\n");
 	}
-      } else {
+      } else if (frame->getDataLength() > 0) {
 	printIndented(4, frame->getData(), frame->getDataLength());
 	printf("\n");
       }
