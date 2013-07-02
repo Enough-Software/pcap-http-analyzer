@@ -258,14 +258,6 @@ void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_he
   }
 }
 
-void printUsage(string programName) {
-  fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
-  fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
-  fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
-  fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
-  exit(1);
-}
-
 void handlePcapFile(string filename) {
   pcap_t *fp;
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -277,6 +269,14 @@ void handlePcapFile(string filename) {
 
   pcap_loop(fp, 0, dispatcherHandler, NULL);
   pcap_close(fp);
+}
+
+void printUsage(string programName) {
+  fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
+  fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
+  fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
+  fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
+  exit(1);
 }
 
 int main(int argc, char** argv) {
