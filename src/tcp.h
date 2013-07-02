@@ -50,4 +50,8 @@ struct nread_tcp {
   u_short th_urp; /* urgent pointer */
 };
 
+typedef struct ether_header RawEtherPacket;
+typedef struct nread_ip RawIpPacket;
+typedef struct nread_tcp RawTcpPacket;
+
 #endif /* __TCP_H__ */

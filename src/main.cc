@@ -210,8 +210,8 @@ bool isWebSocket(unsigned short port) {
   return webSocketPorts.find(port) != webSocketPorts.end();
 }
 
-void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct nread_tcp* tcp) {
-  uint16_t len = ntohs(ip->ip_len) - sizeof(struct nread_ip) - tcp->th_off * 4;
+void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacket* tcp) {
+  uint16_t len = ntohs(ip->ip_len) - sizeof(RawIpPacket) - tcp->th_off * 4;
 
   if (len == 0) {
     return;
@@ -239,9 +239,9 @@ void handleTcpPacket(struct timeval tv, const struct nread_ip* ip, const struct 
   }
 }
 
-void handleIpPacket(struct timeval tv, const struct nread_ip* ip, int /* packet_length */) {
+void handleIpPacket(struct timeval tv, const RawIpPacket* ip, int /* packet_length */) {
   if (ip->ip_p == IPPROTO_TCP) {
-    const struct nread_tcp* tcp = (struct nread_tcp*) (ip + 1);
+    const RawTcpPacket* tcp = (RawTcpPacket*) (ip + 1);
     handleTcpPacket(tv, ip, tcp);
   } else {
     printf("Unknown IP protocol\n");
@@ -250,13 +250,11 @@ void handleIpPacket(struct timeval tv, const struct nread_ip* ip, int /* packet_
 
 void dispatcherHandler(u_char * /* temp1 */, const struct pcap_pkthdr *packet_header, const u_char *packet) {
   u_int length = packet_header->len;  /* packet header length  */
-  struct ether_header *eptr = (struct ether_header *) (packet);
+  RawEtherPacket* eptr = (RawEtherPacket*) packet;
 
   if (ntohs(eptr->ether_type) == ETHERTYPE_IP) {
-    struct nread_ip* ip;
-
-    ip = (struct nread_ip*) (packet + sizeof(struct ether_header));
-    handleIpPacket(packet_header->ts, ip, length - sizeof(struct ether_header));
+    RawIpPacket* ip = (RawIpPacket*) (packet + sizeof(RawEtherPacket));
+    handleIpPacket(packet_header->ts, ip, length - sizeof(RawEtherPacket));
   }
 }
 
