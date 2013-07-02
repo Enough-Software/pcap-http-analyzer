@@ -26,7 +26,7 @@ static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 static set<unsigned short> webSocketPorts;
 
-int isIncomingIpPacket(const struct nread_ip* ip) {
+int isIncomingIpPacket(const RawIpPacket* ip) {
   u_int32_t localNetwork = 0x0000A8C0;
   return memcmp(&(ip->ip_src), &localNetwork, 2) != 0;
 }
