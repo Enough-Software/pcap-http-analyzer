@@ -161,11 +161,11 @@ void printPacketInfo(string partyName, bool isIncoming, struct timeval tv) {
   printTimestamp(tv);
 }
 
-void handleWebsocketNotification(string partyName, bool isIncoming, struct timeval tv, WebSocketParser* ws, const char* data, uint16_t len) {
+void handleWebsocketNotification(string partyName, bool isIncoming, struct timeval tv, WebSocketParser& ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
-  ws->addStreamData(data, len);
+  ws.addStreamData(data, len);
 
-  while ((frame = ws->getNextFrame()) != nullptr) {
+  while ((frame = ws.getNextFrame()) != nullptr) {
     printPacketInfo(partyName, isIncoming, tv);
     printf("ws %s\n", frame->getSubject().c_str());
 
@@ -219,21 +219,21 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
 
   const struct in_addr* ipAddr = isIncomingIpPacket(ip) ? &(ip->ip_dst) : &(ip->ip_src);
   string localHostname = inet_ntoa((struct in_addr) *ipAddr);
-  CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
+  CommunicationParty party = CommunicationPartyManager::getParty(localHostname);
   const char* data = ((const char*) tcp) + tcp->th_off * 4;
 
   if (isIncomingIpPacket(ip)) {
     if (isWebSocket(ntohs(tcp->th_sport))) {
-      handleWebsocketNotification(party->getName(), true, tv, party->getWebSocketParserIncoming(), data, len);
+      handleWebsocketNotification(party.getName(), true, tv, party.getWebSocketParserIncoming(), data, len);
     } else {
-      printPacketInfo(party->getName(), true, tv);
+      printPacketInfo(party.getName(), true, tv);
       handleHttpResponse(data, len);
     }
   } else {
     if (isWebSocket(ntohs(tcp->th_dport))) {
-      handleWebsocketNotification(party->getName(), false, tv, party->getWebSocketParserOutgoing(), data, len);
+      handleWebsocketNotification(party.getName(), false, tv, party.getWebSocketParserOutgoing(), data, len);
     } else {
-      printPacketInfo(party->getName(), false, tv);
+      printPacketInfo(party.getName(), false, tv);
       handleHttpRequest(data, len);
     }
   }

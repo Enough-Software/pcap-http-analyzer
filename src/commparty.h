@@ -1,17 +1,14 @@
 #ifndef __COMMUNICATION_PARTY_H__
 #define __COMMUNICATION_PARTY_H__
 
-#include <string>
+#include "websocket.h"
 
 using namespace std;
 
-class WebSocketParser;
-
 class CommunicationParty {
- private:
-CommunicationParty(string name, string ipAddress);
-
  public:
+  CommunicationParty();
+  CommunicationParty(string name, string ipAddress);
   virtual ~CommunicationParty();
 
   string getName();
@@ -19,21 +16,21 @@ CommunicationParty(string name, string ipAddress);
 
   string getIpAddress();
 
-  WebSocketParser* getWebSocketParserIncoming();
-  WebSocketParser* getWebSocketParserOutgoing();
+  WebSocketParser& getWebSocketParserIncoming();
+  WebSocketParser& getWebSocketParserOutgoing();
 
-  static CommunicationParty* newParty(string ipAddress);
+  static CommunicationParty newParty(string ipAddress);
 
  private:
   string mName;
   string mIpAddress;
-  WebSocketParser* mWsIncoming;
-  WebSocketParser* mWsOutgoing;
+  WebSocketParser mWsIncoming;
+  WebSocketParser mWsOutgoing;
 };
 
 class CommunicationPartyManager {
  public:
-  static CommunicationParty* getParty(string ipAddress);
+  static CommunicationParty getParty(string ipAddress);
 };
 
 #endif /* __COMMUNICATION_PARTY_H__ */
