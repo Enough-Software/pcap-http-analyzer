@@ -287,6 +287,8 @@ int main(int argc, char** argv) {
     { 0, 0, 0, 0 }
   };
 
+  webSocketPorts.insert(8089);
+
   while (1) {
     int option_index = 0;
     int c = getopt_long(argc, argv, "sw:0", long_options, &option_index);
