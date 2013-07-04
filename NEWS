@@ -1,3 +1,10 @@
+2013-07-04 Michael Koch <michael.koch@ennough.de>
+
+    To build the project on OS X please use the following command line to
+    make sure your are using Clang for compiling:
+
+    configure CC=/usr/bin/clang CXX=/usr/bin/clang++
+
 2013-06-30 Michael Koch <michael.koch@ennough.de>
 
     Initial release to github.
