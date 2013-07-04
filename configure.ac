@@ -1,4 +1,4 @@
-AC_INIT([pcap_dump],[0.1])
+AC_INIT([pcap-http-analyzer],[0.1])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_CXX
