@@ -89,6 +89,7 @@ class Netmask {
 class TcpAddress {
  public:
   TcpAddress(const struct in_addr& addr, unsigned short port);
+  TcpAddress(string hostname, unsigned short port);
   virtual ~TcpAddress();
 
   string getHostname() const;
@@ -97,6 +98,36 @@ class TcpAddress {
  private:
   string mHostname;
   unsigned short mPort;
+};
+
+enum TcpConnectionState {
+  NONE,
+  NEW,
+  ESTABLISHED,
+  CLOSED
+};
+
+class TcpConnection {
+ public:
+  TcpConnection();
+  virtual ~TcpConnection();
+
+  virtual bool addPacket(const Buffer& data) = 0;
+
+  static TcpConnection* newConnection();
+
+ private:
+  TcpAddress mLocal;
+  TcpAddress mRemote;
+  TcpConnectionState mState;
+};
+
+class TcpConnectionManager {
+ public:
+  static TcpConnection* getConnection();
+
+ private:
+  static list<pair<pair<TcpAddress, TcpAddress>, TcpConnection*>> sConnections;
 };
 
 #endif /* __TCP_H__ */

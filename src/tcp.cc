@@ -47,6 +47,9 @@ TcpAddress::TcpAddress(const struct in_addr& addr, unsigned short port) {
   mPort = port;
 }
 
+TcpAddress::TcpAddress(string hostname, unsigned short port) : mHostname(hostname), mPort(port) {
+}
+
 TcpAddress::~TcpAddress() {
 }
 
@@ -58,4 +61,15 @@ TcpAddress::getHostname() const {
 unsigned short
 TcpAddress::getPort() const {
   return mPort;
+}
+
+TcpConnection::TcpConnection() : mLocal("192.168.1.1", 1234), mRemote("stringer.jibemobile.com", 8080) {
+}
+
+TcpConnection::~TcpConnection() {
+}
+
+TcpConnection*
+TcpConnection::newConnection() {
+  return nullptr;
 }
