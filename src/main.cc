@@ -5,14 +5,12 @@
 #include <net/ethernet.h>
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
-#include <getopt.h>
-#include <set>
-#include <sstream>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "args.h"
 #include "commparty.h"
 #include "print.h"
 #include "tcp.h"
@@ -20,11 +18,9 @@
 
 using namespace std;
 
-static int flag_short = 0;
-static int flag_stopwatch = 0;
+static Args sArgs;
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
-static set<unsigned short> webSocketPorts;
 
 int isIncomingIpPacket(const RawIpPacket* ip) {
   u_int32_t localNetwork = 0x0000A8C0;
@@ -62,7 +58,7 @@ void printTimestamp(struct timeval tv) {
   long seconds = tv.tv_sec;
   long microSeconds = tv.tv_usec;
 
-  if (flag_stopwatch) {
+  if (sArgs.useStopwatchFormat()) {
     seconds -= baseSeconds;
     microSeconds -= baseMicroSeconds;
 
@@ -100,7 +96,7 @@ void handleHttpRequest(const char* data, int len) {
     printf("ht DATA\n");
   }
 
-  if (!flag_short) {
+  if (!sArgs.useShortOutputFormat()) {
     printf("\n");
 
 #ifdef ENABLE_JSON
@@ -124,12 +120,12 @@ void handleHttpResponse(const char* data, int len) {
     printf("DATA\n");
   }
 
-  if (!flag_short) {
+  if (!sArgs.useShortOutputFormat()) {
     printf("\n");
     const char* bodySeparator = strstr(data, "\r\n\r\n");
 
     if (bodySeparator) {
-      if (!flag_short) {
+      if (!sArgs.useShortOutputFormat()) {
 	printIndented(4, data, bodySeparator - data);
 	printf("\n");
 	int bodyLength = len - (bodySeparator - data + 4);
@@ -169,7 +165,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
     printPacketInfo(partyName, isIncoming, tv);
     printf("ws %s\n", frame->getSubject().c_str());
 
-    if (!flag_short) {
+    if (!sArgs.useShortOutputFormat()) {
       printf("\n");
 
       if (frame->getType() == TEXT) {
@@ -194,19 +190,8 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
   }
 }
 
-void parseWebSocketPorts(string webSocketList) {
-  webSocketPorts.clear();
-
-  string item;
-  stringstream ss(webSocketList);
-
-  while (getline(ss, item, ',')) {
-    unsigned short port = strtoul(item.c_str(), NULL, 0);
-    webSocketPorts.insert(port);
-  }
-}
-
 bool isWebSocket(unsigned short port) {
+  set<unsigned short> webSocketPorts = sArgs.getWebSocketPorts();
   return webSocketPorts.find(port) != webSocketPorts.end();
 }
 
@@ -271,57 +256,12 @@ void handlePcapFile(string filename) {
   pcap_close(fp);
 }
 
-void printUsage(string programName) {
-  fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
-  fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
-  fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
-  fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
-  exit(1);
-}
-
 int main(int argc, char** argv) {
-  static struct option long_options[] = {
-    { "short",     no_argument,       0, 's'},
-    { "stopwatch", no_argument,       0, '0'},
-    { "ws-ports",  required_argument, 0, 'w'},
-    { 0, 0, 0, 0 }
-  };
+  sArgs = Args(argc, argv);
+  list<string> files = sArgs.getFiles();
 
-  webSocketPorts.insert(8089);
-
-  while (1) {
-    int option_index = 0;
-    int c = getopt_long(argc, argv, "sw:0", long_options, &option_index);
-
-    if (c == -1) {
-      break;
-    }
-
-    switch (c) {
-    case 's':
-      flag_short = 1;
-      break;
-
-    case 'w':
-      parseWebSocketPorts(optarg);
-      break;
-
-    case '0':
-      flag_stopwatch = 1;
-      break;
-
-    default:
-      printUsage(argv[0]);
-      break;
-    }
-  }
-
-  if (optind < argc) {
-    while (optind < argc) {
-      handlePcapFile(argv[optind++]);
-    }
-  } else {
-    printUsage(argv[0]);
+  for (list<string>::iterator it = files.begin(); it != files.end(); it++) {
+    handlePcapFile(*it);
   }
 
   return 0;

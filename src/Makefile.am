@@ -2,6 +2,8 @@ bin_PROGRAMS = pcap-http-analyzer
 
 pcap_http_analyzer_SOURCES = \
     main.cc \
+    args.cc \
+    args.h \
     commparty.cc \
     commparty.h \
     print.cc \
