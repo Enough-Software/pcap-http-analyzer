@@ -54,4 +54,29 @@ typedef struct ether_header RawEtherPacket;
 typedef struct nread_ip RawIpPacket;
 typedef struct nread_tcp RawTcpPacket;
 
+class IPv4 {
+ public:
+  IPv4(const struct in_addr& addr);
+  IPv4(unsigned short v1, unsigned short v2, unsigned short v3, unsigned short v4);
+
+  struct in_addr getAddress() const;
+
+ private:
+  struct in_addr mAddress;
+};
+
+class Netmask {
+ public:
+  Netmask(const IPv4& ip, unsigned short netbits);
+
+  IPv4 getIp() const;
+  unsigned short getNetbits() const;
+
+  bool matches(const IPv4& ip) const;
+
+ private:
+  IPv4 mIp;
+  unsigned short mNetbits;
+};
+
 #endif /* __TCP_H__ */

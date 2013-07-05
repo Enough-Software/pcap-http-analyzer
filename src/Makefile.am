@@ -9,6 +9,7 @@ pcap_http_analyzer_SOURCES = \
     print.cc \
     print.h\
     tcp.h \
+    tcp.cc \
     websocket.cc \
     websocket.h
 pcap_http_analyzer_CPPFLAGS = $(JSON_CFLAGS)

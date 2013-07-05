@@ -5,6 +5,8 @@
 #include <set>
 #include <string>
 
+#include "tcp.h"
+
 using namespace std;
 
 class Args {
@@ -15,16 +17,19 @@ class Args {
 
   bool useShortOutputFormat();
   bool useStopwatchFormat();
+  list<Netmask> getFilters();
   set<unsigned short>& getWebSocketPorts();
   list<string>& getFiles();
 
  private:
+  void parseFilter(string filter);
   void parseWebSocketPorts(string ports);
   void printUsage(string programName);
 
  private:
   bool mUseShortOutputFormat;
   bool mUseStopwatchFormat;
+  list<Netmask> mFilters;
   set<unsigned short> mWebSocketPorts;
   list<string> mFiles;
 };

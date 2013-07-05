@@ -22,9 +22,28 @@ static Args sArgs;
 static long baseSeconds = 0;
 static long baseMicroSeconds = 0;
 
+bool isPacketAllowedByFilters(const RawIpPacket* ip) {
+  list<Netmask> filters = sArgs.getFilters();
+
+  for (list<Netmask>::iterator it = filters.begin(); it != filters.end(); it++) {
+    if (it->matches(IPv4(ip->ip_dst)) || it->matches(IPv4(ip->ip_src))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 int isIncomingIpPacket(const RawIpPacket* ip) {
-  u_int32_t localNetwork = 0x0000A8C0;
-  return memcmp(&(ip->ip_src), &localNetwork, 2) != 0;
+  list<Netmask> filters = sArgs.getFilters();
+
+  for (list<Netmask>::iterator it = filters.begin(); it != filters.end(); it++) {
+    if (it->matches(IPv4(ip->ip_dst))) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 #ifdef ENABLE_JSON
@@ -199,6 +218,10 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
   uint16_t len = ntohs(ip->ip_len) - sizeof(RawIpPacket) - tcp->th_off * 4;
 
   if (len == 0) {
+    return;
+  }
+
+  if (!isPacketAllowedByFilters(ip)) {
     return;
   }
 

@@ -4,8 +4,33 @@
 
 #include "args.h"
 
+#include <arpa/inet.h>
 #include <getopt.h>
 #include <sstream>
+
+void
+Args::parseFilter(string filter) {
+  mFilters.clear();
+  string item;
+  stringstream ss(filter);
+
+  while (getline(ss, item, ',')) {
+    unsigned short netbits = 32;
+    string::size_type pos = item.find('/');
+
+    if (pos != string::npos) {
+      string netbitsStr = item.substr(pos + 1);
+      item = item.substr(0, pos);
+      netbits = atoi(netbitsStr.c_str());
+    }
+
+    struct in_addr addr;
+
+    if (inet_aton(item.c_str(), &addr)) {
+      mFilters.push_back(Netmask(IPv4(addr), netbits));
+    }
+  }
+}
 
 void
 Args::parseWebSocketPorts(string webSocketList) {
@@ -23,6 +48,8 @@ Args::parseWebSocketPorts(string webSocketList) {
 void
 Args::printUsage(string programName) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
+  fprintf(stderr, "  --filter, -f    filter for internal devices, comma separated list of netmasks\n");
+  fprintf(stderr, "                  e.g.: -f 192.168.2.107/32,192.168.2.109/32\n");
   fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
   fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
   fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
@@ -33,6 +60,7 @@ Args::Args() {
 }
 
 Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchFormat(false) {
+  mFilters.push_back(Netmask(IPv4(192, 168, 0, 0), 16));
   mWebSocketPorts.insert(8089);
 
   static struct option long_options[] = {
@@ -52,6 +80,10 @@ Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchF
     }
 
     switch (c) {
+    case 'f':
+      parseFilter(optarg);
+      break;
+
     case 's':
       mUseShortOutputFormat = true;
       break;
@@ -90,6 +122,11 @@ Args::useShortOutputFormat() {
 bool
 Args::useStopwatchFormat() {
   return mUseStopwatchFormat;
+}
+
+list<Netmask>
+Args::getFilters() {
+  return mFilters;
 }
 
 set<unsigned short>&
