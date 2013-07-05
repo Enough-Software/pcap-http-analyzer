@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <netinet/tcp.h>
 #include <pcap/pcap.h>
@@ -215,9 +214,9 @@ bool isWebSocket(unsigned short port) {
 }
 
 void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacket* tcp) {
-  uint16_t len = ntohs(ip->ip_len) - sizeof(RawIpPacket) - tcp->th_off * 4;
+  uint16_t tcpDataLen = ntohs(ip->ip_len) - sizeof(RawIpPacket) - tcp->th_off * 4;
 
-  if (len == 0) {
+  if (tcpDataLen == 0) {
     return;
   }
 
@@ -225,24 +224,22 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
     return;
   }
 
-  const struct in_addr* ipAddr = isIncomingIpPacket(ip) ? &(ip->ip_dst) : &(ip->ip_src);
-  string localHostname = inet_ntoa((struct in_addr) *ipAddr);
-  CommunicationParty party = CommunicationPartyManager::getParty(localHostname);
-  const char* data = ((const char*) tcp) + tcp->th_off * 4;
+  bool isIncoming = isIncomingIpPacket(ip);
+  const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
+  const struct in_addr* ipAddr = isIncoming ? &(ip->ip_dst) : &(ip->ip_src);
+  CommunicationParty party = CommunicationPartyManager::getParty(*ipAddr);
+  string partyName = party.getName();
 
-  if (isIncomingIpPacket(ip)) {
-    if (isWebSocket(ntohs(tcp->th_sport))) {
-      handleWebsocketNotification(party.getName(), true, tv, party.getWebSocketParserIncoming(), data, len);
-    } else {
-      printPacketInfo(party.getName(), true, tv);
-      handleHttpResponse(data, len);
-    }
+  if (isWebSocket(ntohs(tcp->th_sport)) || isWebSocket(ntohs(tcp->th_dport))) {
+    WebSocketParser parser = isIncoming ? party.getWebSocketParserIncoming() : party.getWebSocketParserOutgoing();
+    handleWebsocketNotification(partyName, isIncoming, tv, parser, tcpData, tcpDataLen);
   } else {
-    if (isWebSocket(ntohs(tcp->th_dport))) {
-      handleWebsocketNotification(party.getName(), false, tv, party.getWebSocketParserOutgoing(), data, len);
+    printPacketInfo(partyName, isIncoming, tv);
+
+    if (isIncoming) {
+      handleHttpResponse(tcpData, tcpDataLen);
     } else {
-      printPacketInfo(party.getName(), false, tv);
-      handleHttpRequest(data, len);
+      handleHttpRequest(tcpData, tcpDataLen);
     }
   }
 }

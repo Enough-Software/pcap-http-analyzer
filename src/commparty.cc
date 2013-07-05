@@ -5,6 +5,7 @@
 #include "commparty.h"
 #include "websocket.h"
 
+#include <arpa/inet.h>
 #include <map>
 
 CommunicationParty::CommunicationParty() : mName(""), mIpAddress("") {
@@ -65,5 +66,12 @@ CommunicationPartyManager::getParty(string ipAddress) {
 
   CommunicationParty party = CommunicationParty::newParty(ipAddress);
   parties[ipAddress] = party;
+  return party;
+}
+
+CommunicationParty
+CommunicationPartyManager::getParty(const struct in_addr& addr) {
+  string localHostname = inet_ntoa((struct in_addr) addr);
+  CommunicationParty party = CommunicationPartyManager::getParty(localHostname);
   return party;
 }

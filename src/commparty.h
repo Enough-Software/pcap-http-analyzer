@@ -3,6 +3,8 @@
 
 #include "websocket.h"
 
+#include <netinet/in.h>
+
 using namespace std;
 
 class CommunicationParty {
@@ -31,6 +33,7 @@ class CommunicationParty {
 class CommunicationPartyManager {
  public:
   static CommunicationParty getParty(string ipAddress);
+  static CommunicationParty getParty(const struct in_addr& addr);
 };
 
 #endif /* __COMMUNICATION_PARTY_H__ */
