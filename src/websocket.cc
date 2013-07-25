@@ -192,7 +192,7 @@ WebSocketParser::getNextFrame() {
 
     if (mLength >= payloadHeaderLength + payloadLength) {
       if (frameType != CONTINUATION) {
-	mLastFrameType = (FrameType) frameType; 
+	mLastFrameType = frameType;
       }
 
       char* payload = (char*) malloc(payloadLength + 1);
