@@ -226,8 +226,8 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
 
   bool isIncoming = isIncomingIpPacket(ip);
   const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
-  const struct in_addr* ipAddr = isIncoming ? &(ip->ip_dst) : &(ip->ip_src);
-  CommunicationParty party = CommunicationPartyManager::getParty(*ipAddr);
+  const struct in_addr ipAddr = isIncoming ? ip->ip_dst : ip->ip_src;
+  CommunicationParty party = CommunicationPartyManager::getParty(ipAddr);
   string partyName = party.getName();
 
   if (isWebSocket(ntohs(tcp->th_sport)) || isWebSocket(ntohs(tcp->th_dport))) {
