@@ -85,7 +85,7 @@ void printJsonNode(JsonNode* node, unsigned int* indent) {
       break;
 
     case G_TYPE_INT64:
-      printf("%lld", json_node_get_int(node));
+      printf("%lld", (long long) json_node_get_int(node));
       break;
 
     default:
