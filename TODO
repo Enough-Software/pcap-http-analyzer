@@ -1,3 +1,1 @@
 - tcp connection tracking
-- configurable time format (time since dump start, wall time, disabled, etc.)
-- command line argument parsing
