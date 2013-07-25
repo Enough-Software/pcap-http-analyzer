@@ -195,15 +195,6 @@ WebSocketParser::getNextFrame() {
 	mLastFrameType = frameType;
       }
 
-      char* payload = (char*) malloc(payloadLength + 1);
-      payload[payloadLength] = '\0';
-      memcpy(payload, mData + payloadHeaderLength, payloadLength);
-      mLength -= payloadHeaderLength + payloadLength;
-
-      if (mLength > 0) {
-	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
-      }
-
       WebSocketFrame* frame;
 
       if (mLastFrameType == TEXT) {
@@ -213,7 +204,16 @@ WebSocketParser::getNextFrame() {
 	frame->setSubject(WebSocketFrame::typeAsString(frameType));
       }
 
+      char* payload = (char*) malloc(payloadLength + 1);
+      payload[payloadLength] = '\0';
+      memcpy(payload, mData + payloadHeaderLength, payloadLength);
       frame->setData(payload, payloadLength);
+      mLength -= payloadHeaderLength + payloadLength;
+
+      if (mLength > 0) {
+	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
+      }
+
       return frame;
     }
   }
