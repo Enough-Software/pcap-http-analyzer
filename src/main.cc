@@ -242,6 +242,8 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
       handleHttpRequest(tcpData, tcpDataLen);
     }
   }
+
+  fflush(stdout);
 }
 
 void handleIpPacket(struct timeval tv, const RawIpPacket* ip, int /* packet_length */) {
