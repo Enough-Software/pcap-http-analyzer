@@ -150,7 +150,7 @@ WebSocketParser::addStreamData(const char* data, unsigned int len) {
 WebSocketFrame*
 WebSocketParser::getNextFrame() {
   if (!mHeaderHandled) {
-    char* pos = strstr(mData, "\r\n\r\n");
+    char* pos = (char*) memmem(mData, mLength, "\r\n\r\n", 4);
 
     if (pos) {
       char* data = (char*) malloc(pos - mData);
