@@ -143,25 +143,23 @@ void handleHttpResponse(const char* data, int len) {
     const char* bodySeparator = strstr(data, "\r\n\r\n");
 
     if (bodySeparator) {
-      if (!sArgs.useShortOutputFormat()) {
-	printIndented(4, data, bodySeparator - data);
-	printf("\n");
-	int bodyLength = len - (bodySeparator - data + 4);
+      printIndented(4, data, bodySeparator - data);
+      printf("\n");
+      int bodyLength = len - (bodySeparator - data + 4);
 
-	if (bodyLength > 0) {
-	  const char* body = bodySeparator + 4;
+      if (bodyLength > 0) {
+	const char* body = bodySeparator + 4;
 
 #ifdef ENABLE_JSON
-	  if (!parseAndPrintJson(body, bodyLength)) {
+	if (!parseAndPrintJson(body, bodyLength)) {
 #endif /* ENABLE_JSON */
-	    printIndented(4, body, bodyLength);
-	    printf("\n");
+	  printIndented(4, body, bodyLength);
+	  printf("\n");
 #ifdef ENABLE_JSON
-	  }
-#endif /* ENABLE_JSON */
-	} else {
-	  printIndented(4, "Empty body\n\n", 12);
 	}
+#endif /* ENABLE_JSON */
+      } else {
+	printIndented(4, "Empty body\n\n", 12);
       }
     } else {
       PRINT_BUFFER(data, len);
