@@ -33,11 +33,11 @@ Args::parseFilter(string filter) {
 }
 
 void
-Args::parseWebSocketPorts(string webSocketList) {
+Args::parseWebSocketPorts(string ports) {
   mWebSocketPorts.clear();
 
   string item;
-  stringstream ss(webSocketList);
+  stringstream ss(ports);
 
   while (getline(ss, item, ',')) {
     unsigned short port = strtoul(item.c_str(), NULL, 0);
