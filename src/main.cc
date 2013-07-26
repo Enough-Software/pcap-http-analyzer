@@ -208,7 +208,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
   }
 }
 
-bool isWebSocket(unsigned short port) {
+bool isWebSocketPort(unsigned short port) {
   set<unsigned short> webSocketPorts = sArgs.getWebSocketPorts();
   return webSocketPorts.find(port) != webSocketPorts.end();
 }
@@ -230,7 +230,7 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
   CommunicationParty party = CommunicationPartyManager::getParty(ipAddr);
   string partyName = party.getName();
 
-  if (isWebSocket(ntohs(tcp->th_sport)) || isWebSocket(ntohs(tcp->th_dport))) {
+  if (isWebSocketPort(ntohs(tcp->th_sport)) || isWebSocketPort(ntohs(tcp->th_dport))) {
     WebSocketParser parser = isIncoming ? party.getWebSocketParserIncoming() : party.getWebSocketParserOutgoing();
     handleWebsocketNotification(partyName, isIncoming, tv, parser, tcpData, tcpDataLen);
   } else {
