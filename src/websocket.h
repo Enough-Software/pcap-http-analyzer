@@ -23,14 +23,14 @@ class WebSocketFrame
   WebSocketFrame(int flags, FrameType type);
   virtual ~WebSocketFrame();
 
-  int getFlags();
-  FrameType getType();
+  int getFlags() const;
+  FrameType getType() const;
 
   const char* getData();
   unsigned int getDataLength();
   void setData(const char* data, unsigned int len);
 
-  virtual string getSubject();
+  virtual string getSubject() const;
   virtual void setSubject(string subject);
 
   static string typeAsString(FrameType type);

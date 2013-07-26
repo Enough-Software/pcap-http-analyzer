@@ -24,8 +24,13 @@ WebSocketFrame::~WebSocketFrame() {
   }
 }
 
+int
+WebSocketFrame::getFlags() const {
+  return mFlags;
+}
+
 FrameType
-WebSocketFrame::getType() {
+WebSocketFrame::getType() const {
   return mType;
 }
 
@@ -46,7 +51,7 @@ WebSocketFrame::setData(const char* data, unsigned int len) {
 }
 
 string
-WebSocketFrame::getSubject() {
+WebSocketFrame::getSubject() const {
   return mSubject;
 }
 
