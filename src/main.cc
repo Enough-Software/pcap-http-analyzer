@@ -118,7 +118,7 @@ void handleHttpRequest(const char* data, int len) {
     printf("\n");
 
 #ifdef ENABLE_JSON
-    if (data[0] != '{' || !parseAndPrintJson(data, len)) {
+    if (!parseAndPrintJson(data, len)) {
 #endif /* ENABLE_JSON */
       printIndented(4, data, len);
 
@@ -126,6 +126,8 @@ void handleHttpRequest(const char* data, int len) {
 	printf("\n");
       }
 #ifdef ENABLE_JSON
+    } else {
+      printf("\n");
     }
 #endif /* ENABLE_JSON */
   }
@@ -154,17 +156,17 @@ void handleHttpResponse(const char* data, int len) {
 	if (!parseAndPrintJson(body, bodyLength)) {
 #endif /* ENABLE_JSON */
 	  printIndented(4, body, bodyLength);
-	  printf("\n");
 #ifdef ENABLE_JSON
 	}
 #endif /* ENABLE_JSON */
       } else {
-	printIndented(4, "Empty body\n\n", 12);
+	printIndented(4, "Empty body\n", 12);
       }
     } else {
       PRINT_BUFFER(data, len);
-      printf("\n");
     }
+
+    printf("\n");
   }
 }
 
@@ -188,18 +190,19 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
 	if (frame->getDataLength() > 0) {
 #ifdef ENABLE_JSON
 	  if (!parseAndPrintJson(frame->getData(), frame->getDataLength())) {
-	    printf("    %s (FAILED TO PARSE)\n\n", frame->getData());
+	    printf("    %s (FAILED TO PARSE)\n", frame->getData());
 	  }
 #else /* ENABLE_JSON */
-	  printf("    %s\n\n", frame->getData());
+	  printf("    %s\n", frame->getData());
 #endif /* ENABLE_JSON */
 	} else {
-	  printf("    Empty frame\n\n");
+	  printf("    Empty frame\n");
 	}
       } else if (frame->getDataLength() > 0) {
 	printIndented(4, frame->getData(), frame->getDataLength());
-	printf("\n");
       }
+
+      printf("\n");
     }
 
     delete frame;

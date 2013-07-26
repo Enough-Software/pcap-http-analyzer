@@ -121,7 +121,7 @@ void printJson(JsonObject* obj) {
   printf("{\n");
   json_object_foreach_member(obj, printJsonObjectContent, &indent);
   printIndent(4);
-  printf("}\n\n");
+  printf("}\n");
 }
 
 #endif /* ENABLE_JSON */
