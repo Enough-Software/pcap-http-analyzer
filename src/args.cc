@@ -33,6 +33,19 @@ Args::parseFilter(string filter) {
 }
 
 void
+Args::parseHttpPorts(string ports) {
+  mHttpPorts.clear();
+
+  string item;
+  stringstream ss(ports);
+
+  while (getline(ss, item, ',')) {
+    unsigned short port = strtoul(item.c_str(), NULL, 0);
+    mHttpPorts.insert(port);
+  }
+}
+
+void
 Args::parseWebSocketPorts(string ports) {
   mWebSocketPorts.clear();
 
@@ -48,11 +61,12 @@ Args::parseWebSocketPorts(string ports) {
 void
 Args::printUsage(string programName) {
   fprintf(stderr, "\nUsage: %s [OPTIONS] filename\n\n", programName.c_str());
-  fprintf(stderr, "  --filter, -f    filter for internal devices, comma separated list of netmasks\n");
-  fprintf(stderr, "                  e.g.: -f 192.168.2.107/32,192.168.2.109/32\n");
-  fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
-  fprintf(stderr, "  --stopwatch, -0 don't use wall clock time for packets, instead start at 00:00:00\n");
-  fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
+  fprintf(stderr, "  --filter, -f      filter for internal devices, comma separated list of netmasks\n");
+  fprintf(stderr, "                    e.g.: -f 192.168.2.107/32,192.168.2.109/32\n");
+  fprintf(stderr, "  --short, -s       short output format, no detailed messages\n");
+  fprintf(stderr, "  --stopwatch, -0   don't use wall clock time for packets, instead start at 00:00:00\n");
+  fprintf(stderr, "  --http-ports=...  comma separated list of ports used for HTTP/REST connections\n");
+  fprintf(stderr, "  --ws-ports=...    comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
   exit(1);
 }
 
@@ -61,19 +75,22 @@ Args::Args() {
 
 Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchFormat(false) {
   mFilters.push_back(Netmask(IPv4(192, 168, 0, 0), 16));
+  mHttpPorts.insert(8080);
+  mHttpPorts.insert(8088);
   mWebSocketPorts.insert(8089);
 
   static struct option long_options[] = {
-    { "filter",    required_argument, 0, 'f'},
-    { "short",     no_argument,       0, 's'},
-    { "stopwatch", no_argument,       0, '0'},
-    { "ws-ports",  required_argument, 0, 'w'},
+    { "filter",     required_argument, 0, 'f'},
+    { "short",      no_argument,       0, 's'},
+    { "stopwatch",  no_argument,       0, '0'},
+    { "http-ports", required_argument, 0, 'h'},
+    { "ws-ports",   required_argument, 0, 'w'},
     { 0, 0, 0, 0 }
   };
 
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "f:sw:0", long_options, &option_index);
+    int c = getopt_long(argc, argv, "f:sh:w:0", long_options, &option_index);
 
     if (c == -1) {
       break;
@@ -86,6 +103,10 @@ Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchF
 
     case 's':
       mUseShortOutputFormat = true;
+      break;
+
+    case 'h':
+      parseHttpPorts(optarg);
       break;
 
     case 'w':
@@ -127,6 +148,11 @@ Args::useStopwatchFormat() {
 list<Netmask>
 Args::getFilters() {
   return mFilters;
+}
+
+set<unsigned short>&
+Args::getHttpPorts() {
+  return mHttpPorts;
 }
 
 set<unsigned short>&

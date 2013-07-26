@@ -208,6 +208,11 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
   }
 }
 
+bool isHttpPort(unsigned short port) {
+  set<unsigned short> httpPorts = sArgs.getHttpPorts();
+  return httpPorts.find(port) != httpPorts.end();
+}
+
 bool isWebSocketPort(unsigned short port) {
   set<unsigned short> webSocketPorts = sArgs.getWebSocketPorts();
   return webSocketPorts.find(port) != webSocketPorts.end();
@@ -233,7 +238,7 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
   if (isWebSocketPort(ntohs(tcp->th_sport)) || isWebSocketPort(ntohs(tcp->th_dport))) {
     WebSocketParser parser = isIncoming ? party.getWebSocketParserIncoming() : party.getWebSocketParserOutgoing();
     handleWebsocketNotification(partyName, isIncoming, tv, parser, tcpData, tcpDataLen);
-  } else {
+  } else if (isHttpPort(ntohs(tcp->th_sport)) || isHttpPort(ntohs(tcp->th_dport))){
     printPacketInfo(partyName, isIncoming, tv);
 
     if (isIncoming) {

@@ -18,11 +18,13 @@ class Args {
   bool useShortOutputFormat();
   bool useStopwatchFormat();
   list<Netmask> getFilters();
+  set<unsigned short>& getHttpPorts();
   set<unsigned short>& getWebSocketPorts();
   list<string>& getFiles();
 
  private:
   void parseFilter(string filter);
+  void parseHttpPorts(string ports);
   void parseWebSocketPorts(string ports);
   void printUsage(string programName);
 
@@ -30,6 +32,7 @@ class Args {
   bool mUseShortOutputFormat;
   bool mUseStopwatchFormat;
   list<Netmask> mFilters;
+  set<unsigned short> mHttpPorts;
   set<unsigned short> mWebSocketPorts;
   list<string> mFiles;
 };
