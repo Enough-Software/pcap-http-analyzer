@@ -49,7 +49,7 @@ class NotificationFrame : public WebSocketFrame
   NotificationFrame(int flags);
   virtual ~NotificationFrame();
 
-  virtual string getSubject();
+  virtual string getSubject() const;
   virtual void setSubject(string subject);
 };
 

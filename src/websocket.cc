@@ -104,7 +104,7 @@ NotificationFrame::~NotificationFrame() {
 }
 
 string
-NotificationFrame::getSubject() {
+NotificationFrame::getSubject() const {
   string type("Unknown notification type");
   string dataStr(mData, mDataLength);
   int posStart = dataStr.find("\"type\":\"");
