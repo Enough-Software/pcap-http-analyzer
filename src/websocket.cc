@@ -153,7 +153,7 @@ WebSocketParser::getNextFrame() {
     char* pos = strstr(mData, "\r\n\r\n");
 
     if (pos) {
-      char* data = (char*) malloc(mLength);
+      char* data = (char*) malloc(pos - mData);
       memcpy(data, mData, pos - mData);
 
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
