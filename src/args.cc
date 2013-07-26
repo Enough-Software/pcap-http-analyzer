@@ -51,7 +51,7 @@ Args::printUsage(string programName) {
   fprintf(stderr, "  --filter, -f    filter for internal devices, comma separated list of netmasks\n");
   fprintf(stderr, "                  e.g.: -f 192.168.2.107/32,192.168.2.109/32\n");
   fprintf(stderr, "  --short, -s     short output format, no detailed messages\n");
-  fprintf(stderr, "  --stopwatch, -0 short output format, no detailed messages\n");
+  fprintf(stderr, "  --stopwatch, -0 don't use wall clock time for packets, instead start at 00:00:00\n");
   fprintf(stderr, "  --ws-ports=...  comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
   exit(1);
 }
