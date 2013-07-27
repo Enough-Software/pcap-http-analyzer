@@ -13,5 +13,5 @@ pcap_http_analyzer_SOURCES = \
     websocket.cc \
     websocket.h
 pcap_http_analyzer_CPPFLAGS = $(JSON_CFLAGS)
-pcap_http_analyzer_CXXFLAGS = -std=c++11
+pcap_http_analyzer_CXXFLAGS = -std=c++11 -Wall -pedantic -Werror
 pcap_http_analyzer_LDADD = $(JSON_LIBS) -lpcap
