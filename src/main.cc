@@ -175,11 +175,11 @@ void printPacketInfo(string partyName, bool isIncoming, struct timeval tv) {
   printTimestamp(tv);
 }
 
-void handleWebsocketNotification(string partyName, bool isIncoming, struct timeval tv, WebSocketParser& ws, const char* data, uint16_t len) {
+void handleWebsocketNotification(string partyName, bool isIncoming, struct timeval tv, WebSocketParser* ws, const char* data, uint16_t len) {
   WebSocketFrame* frame;
-  ws.addStreamData(data, len);
+  ws->addStreamData(data, len);
 
-  while ((frame = ws.getNextFrame()) != nullptr) {
+  while ((frame = ws->getNextFrame()) != nullptr) {
     printPacketInfo(partyName, isIncoming, tv);
     printf("ws %s\n", frame->getSubject().c_str());
 
@@ -233,11 +233,11 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
   bool isIncoming = isIncomingIpPacket(ip);
   const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
   const struct in_addr ipAddr = isIncoming ? ip->ip_dst : ip->ip_src;
-  CommunicationParty party = CommunicationPartyManager::getParty(ipAddr);
-  string partyName = party.getName();
+  CommunicationParty* party = CommunicationPartyManager::getParty(ipAddr);
+  string partyName = party->getName();
 
   if (isWebSocketPort(ntohs(tcp->th_sport)) || isWebSocketPort(ntohs(tcp->th_dport))) {
-    WebSocketParser parser = isIncoming ? party.getWebSocketParserIncoming() : party.getWebSocketParserOutgoing();
+    WebSocketParser* parser = isIncoming ? party->getWebSocketParserIncoming() : party->getWebSocketParserOutgoing();
     handleWebsocketNotification(partyName, isIncoming, tv, parser, tcpData, tcpDataLen);
   } else if (isHttpPort(ntohs(tcp->th_sport)) || isHttpPort(ntohs(tcp->th_dport))){
     printPacketInfo(partyName, isIncoming, tv);
@@ -292,5 +292,6 @@ int main(int argc, char** argv) {
     handlePcapFile(*it);
   }
 
+  CommunicationPartyManager::cleanup();
   return 0;
 }

@@ -32,43 +32,54 @@ CommunicationParty::getIpAddress() {
   return mIpAddress;
 }
 
-WebSocketParser&
+WebSocketParser*
 CommunicationParty::getWebSocketParserIncoming() {
-  return mWsIncoming;
+  return &mWsIncoming;
 }
 
-WebSocketParser&
+WebSocketParser*
 CommunicationParty::getWebSocketParserOutgoing() {
-  return mWsOutgoing;
+  return &mWsOutgoing;
 }
 
-static map<string, CommunicationParty> parties;
+static map<string, CommunicationParty*> parties;
 
-CommunicationParty
+CommunicationParty*
 CommunicationParty::newParty(string ipAddress) {
   string name;
   name = 'A' + parties.size();
 
-  CommunicationParty party(name, ipAddress);
+  CommunicationParty* party = new CommunicationParty(name, ipAddress);
   return party;
 }
 
-CommunicationParty
+CommunicationParty*
 CommunicationPartyManager::getParty(string ipAddress) {
-  map<string, CommunicationParty>::iterator it = parties.find(ipAddress);
+  map<string, CommunicationParty*>::iterator it = parties.find(ipAddress);
 
   if (it != parties.end()) {
     return it->second;
   }
 
-  CommunicationParty party = CommunicationParty::newParty(ipAddress);
+  CommunicationParty* party = CommunicationParty::newParty(ipAddress);
   parties[ipAddress] = party;
   return party;
 }
 
-CommunicationParty
+CommunicationParty*
 CommunicationPartyManager::getParty(const struct in_addr& addr) {
   string localHostname = inet_ntoa((struct in_addr) addr);
-  CommunicationParty party = CommunicationPartyManager::getParty(localHostname);
+  CommunicationParty* party = CommunicationPartyManager::getParty(localHostname);
   return party;
+}
+
+void
+CommunicationPartyManager::cleanup() {
+  map<string, CommunicationParty*>::iterator it;
+
+  for (it = parties.begin(); it != parties.end(); ++it) {
+    delete it->second;
+  }
+
+  parties.clear();
 }

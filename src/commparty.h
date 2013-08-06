@@ -18,10 +18,10 @@ class CommunicationParty {
 
   string getIpAddress();
 
-  WebSocketParser& getWebSocketParserIncoming();
-  WebSocketParser& getWebSocketParserOutgoing();
+  WebSocketParser* getWebSocketParserIncoming();
+  WebSocketParser* getWebSocketParserOutgoing();
 
-  static CommunicationParty newParty(string ipAddress);
+  static CommunicationParty* newParty(string ipAddress);
 
  private:
   string mName;
@@ -32,8 +32,10 @@ class CommunicationParty {
 
 class CommunicationPartyManager {
  public:
-  static CommunicationParty getParty(string ipAddress);
-  static CommunicationParty getParty(const struct in_addr& addr);
+  static void cleanup();
+
+  static CommunicationParty* getParty(string ipAddress);
+  static CommunicationParty* getParty(const struct in_addr& addr);
 };
 
 #endif /* __COMMUNICATION_PARTY_H__ */
