@@ -42,19 +42,16 @@ CommunicationParty::getWebSocketParserOutgoing() {
   return mWsOutgoing;
 }
 
-static unsigned int nextPartyIndex = 0;
+static map<string, CommunicationParty> parties;
 
 CommunicationParty
 CommunicationParty::newParty(string ipAddress) {
   string name;
-  name = 'A' + nextPartyIndex;
-  nextPartyIndex++;
+  name = 'A' + parties.size();
 
   CommunicationParty party(name, ipAddress);
   return party;
 }
-
-static map<string, CommunicationParty> parties;
 
 CommunicationParty
 CommunicationPartyManager::getParty(string ipAddress) {
