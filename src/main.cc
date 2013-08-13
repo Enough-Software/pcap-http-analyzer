@@ -160,7 +160,7 @@ void handleHttpResponse(const char* data, int len) {
 	}
 #endif /* ENABLE_JSON */
       } else {
-	printIndented(4, "Empty body\n", 12);
+	printIndented(4, "Empty body", 12);
       }
     } else {
       PRINT_BUFFER(data, len);
@@ -184,9 +184,9 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
     printf("ws %s\n", frame->getSubject().c_str());
 
     if (!sArgs.useShortOutputFormat()) {
-      printf("\n");
-
       if (frame->getType() == TEXT) {
+	printf("\n");
+
 	if (frame->getDataLength() > 0) {
 #ifdef ENABLE_JSON
 	  if (!parseAndPrintJson(frame->getData(), frame->getDataLength())) {
@@ -199,6 +199,7 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
 	  printf("    Empty frame\n");
 	}
       } else if (frame->getDataLength() > 0) {
+	printf("\n");
 	printIndented(4, frame->getData(), frame->getDataLength());
       }
 
