@@ -43,7 +43,7 @@ void printIndented(int indent, const char* str, int len) {
 #ifdef ENABLE_JSON
 
 void printJsonArrayContent(JsonArray*, guint, JsonNode*, gpointer);
-void printJsonObjectContent(JsonObject*, const gchar*, JsonNode*, gpointer);
+void printJsonObject(JsonObject*, unsigned int* indent);
 
 void printJsonNode(JsonNode* node, unsigned int* indent) {
   JsonArray* array;
@@ -54,7 +54,7 @@ void printJsonNode(JsonNode* node, unsigned int* indent) {
     obj = json_node_get_object(node);
     printf("{\n");
     *indent += 2;
-    json_object_foreach_member(obj, printJsonObjectContent, indent);
+    printJsonObject(obj, indent);
     *indent -= 2;
     printIndent(*indent);
     printf("}");
@@ -100,26 +100,42 @@ void printJsonNode(JsonNode* node, unsigned int* indent) {
   }
 }
 
-void printJsonArrayContent(JsonArray*, guint, JsonNode* array_node, gpointer data) {
+void printJsonArrayContent(JsonArray* array, guint index, JsonNode* array_node, gpointer data) {
   unsigned int* indent = (unsigned int*) data;
   printIndent(*indent);
   printJsonNode(array_node, indent);
+
+  if (index < json_array_get_length(array) - 1) {
+    printf(",");
+  }
+
   printf("\n");
 }
 
-void printJsonObjectContent(JsonObject*, const gchar* member_name, JsonNode* member_node, gpointer data) {
-  unsigned int* indent = (unsigned int*) data;
-  printIndent(*indent);
-  printf("\"%s\":", member_name);
-  printJsonNode(member_node, indent);
-  printf("\n");
+void printJsonObject(JsonObject* object, unsigned int* indent) {
+  GList* element;
+  GList* members = json_object_get_members(object);
+
+  for (element = members; element; element = element->next) {
+    printIndent(*indent);
+    printf("\"%s\":", (const gchar*) element->data);
+    printJsonNode(json_object_get_member(object, (const gchar*) element->data), indent);
+
+    if (element->next != NULL) {
+      printf(",");
+    }
+
+    printf("\n");
+  }
+
+  g_list_free(members);
 }
 
 void printJson(JsonObject* obj) {
   unsigned int indent = 6;
   printIndent(4);
   printf("{\n");
-  json_object_foreach_member(obj, printJsonObjectContent, &indent);
+  printJsonObject(obj, &indent);
   printIndent(4);
   printf("}\n");
 }
