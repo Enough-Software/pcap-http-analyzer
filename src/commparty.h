@@ -7,6 +7,8 @@
 
 using namespace std;
 
+class TcpAddress;
+
 class CommunicationParty {
  public:
   CommunicationParty();
@@ -35,7 +37,7 @@ class CommunicationPartyManager {
   static void cleanup();
 
   static CommunicationParty* getParty(string ipAddress);
-  static CommunicationParty* getParty(const struct in_addr& addr);
+  static CommunicationParty* getParty(const TcpAddress& addr);
 };
 
 #endif /* __COMMUNICATION_PARTY_H__ */

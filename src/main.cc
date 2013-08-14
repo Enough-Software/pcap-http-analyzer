@@ -233,14 +233,15 @@ void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacke
 
   bool isIncoming = isIncomingIpPacket(ip);
   const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
-  const struct in_addr ipAddr = isIncoming ? ip->ip_dst : ip->ip_src;
-  CommunicationParty* party = CommunicationPartyManager::getParty(ipAddr);
+  TcpAddress src(ip->ip_src, ntohs(tcp->th_sport));
+  TcpAddress dest(ip->ip_dst, ntohs(tcp->th_dport));
+  CommunicationParty* party = CommunicationPartyManager::getParty(isIncoming ? dest : src);
   string partyName = party->getName();
 
-  if (isWebSocketPort(ntohs(tcp->th_sport)) || isWebSocketPort(ntohs(tcp->th_dport))) {
+  if (isWebSocketPort(src.getPort()) || isWebSocketPort(dest.getPort())) {
     WebSocketParser* parser = isIncoming ? party->getWebSocketParserIncoming() : party->getWebSocketParserOutgoing();
     handleWebsocketNotification(partyName, isIncoming, tv, parser, tcpData, tcpDataLen);
-  } else if (isHttpPort(ntohs(tcp->th_sport)) || isHttpPort(ntohs(tcp->th_dport))){
+  } else if (isHttpPort(src.getPort()) || isHttpPort(dest.getPort())) {
     printPacketInfo(partyName, isIncoming, tv);
 
     if (isIncoming) {

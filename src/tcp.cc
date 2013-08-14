@@ -4,6 +4,8 @@
 
 #include "tcp.h"
 
+#include <arpa/inet.h>
+
 IPv4::IPv4(const struct in_addr& addr) {
   mAddress = (const struct in_addr) addr;
 }
@@ -37,4 +39,23 @@ Netmask::matches(const IPv4& ip) const {
   uint32_t networkFilter = ntohl(mIp.getAddress().s_addr) & mask;
   uint32_t networkPacket = ntohl(ip.getAddress().s_addr) & mask;
   return networkFilter == networkPacket;
+}
+
+TcpAddress::TcpAddress(const struct in_addr& addr, unsigned short port) {
+  string hostname = inet_ntoa((struct in_addr) addr);
+  mHostname = hostname;
+  mPort = port;
+}
+
+TcpAddress::~TcpAddress() {
+}
+
+string
+TcpAddress::getHostname() const {
+  return mHostname;
+}
+
+unsigned short
+TcpAddress::getPort() const {
+  return mPort;
 }

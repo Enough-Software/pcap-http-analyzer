@@ -3,6 +3,11 @@
 
 #include <netinet/in.h>
 
+#include <list>
+#include <string>
+
+using namespace std;
+
 typedef u_int32_t tcp_seq;
 
 struct nread_ip {
@@ -54,6 +59,8 @@ typedef struct ether_header RawEtherPacket;
 typedef struct nread_ip RawIpPacket;
 typedef struct nread_tcp RawTcpPacket;
 
+class Buffer;
+
 class IPv4 {
  public:
   IPv4(const struct in_addr& addr);
@@ -77,6 +84,19 @@ class Netmask {
  private:
   IPv4 mIp;
   unsigned short mNetbits;
+};
+
+class TcpAddress {
+ public:
+  TcpAddress(const struct in_addr& addr, unsigned short port);
+  virtual ~TcpAddress();
+
+  string getHostname() const;
+  unsigned short getPort() const;
+
+ private:
+  string mHostname;
+  unsigned short mPort;
 };
 
 #endif /* __TCP_H__ */
