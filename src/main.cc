@@ -190,10 +190,14 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
 	if (frame->getDataLength() > 0) {
 #ifdef ENABLE_JSON
 	  if (!parseAndPrintJson(frame->getData(), frame->getDataLength())) {
-	    printf("    %s (FAILED TO PARSE)\n", frame->getData());
+	    printf("    ");
+	    PRINT_BUFFER(frame->getData(), frame->getDataLength());
+	    printf(" (FAILED TO PARSE)\n");
 	  }
 #else /* ENABLE_JSON */
-	  printf("    %s\n", frame->getData());
+	  printf("    ");
+	  PRINT_BUFFER(frame->getData(), frame->getDataLength());
+	  printf("\n");
 #endif /* ENABLE_JSON */
 	} else {
 	  printf("    Empty frame\n");
