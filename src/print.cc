@@ -8,6 +8,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char* strnchr(const char *str, size_t len, int character) {
+  const char* end = str + len;
+  char c = (char) character;
+
+  do {
+    if (*str == c) {
+      return str;
+    }
+  } while (++str < end);
+
+  return NULL;
+}
+
 void printIndent(int indent) {
   for (int index = 0; index < indent; index++) {
     printf(" ");
@@ -18,8 +31,8 @@ void printIndented(int indent, const char* str, int len) {
   const char* tmp = str;
 
   while (len > 0) {
-    const char* rPos = strchr(tmp, '\r');
-    const char* nPos = strchr(tmp, '\n');
+    const char* rPos = strnchr(tmp, len, '\r');
+    const char* nPos = strnchr(tmp, len, '\n');
     printIndent(indent);
 
     if (nPos != NULL && (nPos - tmp) < len) {
