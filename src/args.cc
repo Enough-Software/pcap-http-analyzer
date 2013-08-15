@@ -74,11 +74,6 @@ Args::Args() {
 }
 
 Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchFormat(false) {
-  mFilters.push_back(Netmask(IPv4(192, 168, 0, 0), 16));
-  mHttpPorts.insert(8080);
-  mHttpPorts.insert(8088);
-  mWebSocketPorts.insert(8089);
-
   static struct option long_options[] = {
     { "filter",     required_argument, 0, 'f'},
     { "short",      no_argument,       0, 's'},
