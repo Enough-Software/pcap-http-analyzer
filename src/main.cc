@@ -221,20 +221,21 @@ bool isWebSocketPort(unsigned short port) {
 }
 
 void handleTcpPacket(struct timeval tv, const RawIpPacket* ip, const RawTcpPacket* tcp) {
+  const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
   uint16_t tcpDataLen = ntohs(ip->ip_len) - sizeof(RawIpPacket) - tcp->th_off * 4;
-
-  if (tcpDataLen == 0) {
-    return;
-  }
 
   if (!isPacketAllowedByFilters(ip)) {
     return;
   }
 
-  bool isIncoming = isIncomingIpPacket(ip);
-  const char* tcpData = ((const char*) tcp) + tcp->th_off * 4;
   TcpAddress src(ip->ip_src, ntohs(tcp->th_sport));
   TcpAddress dest(ip->ip_dst, ntohs(tcp->th_dport));
+
+  if (tcpDataLen == 0) {
+    return;
+  }
+
+  bool isIncoming = isIncomingIpPacket(ip);
   CommunicationParty* party = CommunicationPartyManager::getParty(isIncoming ? dest : src);
   string partyName = party->getName();
 
