@@ -15,13 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(nullptr), mDataLength(0), mSubject("No subject") {
+WebSocketFrame::WebSocketFrame(int flags, FrameType type) : mFlags(flags), mType(type), mData(nullptr, 0), mSubject("No subject") {
 }
 
 WebSocketFrame::~WebSocketFrame() {
-  if (mData) {
-    free((void*) mData);
-  }
 }
 
 int
@@ -34,21 +31,14 @@ WebSocketFrame::getType() const {
   return mType;
 }
 
-const char*
-WebSocketFrame::getData() {
+const Buffer
+WebSocketFrame::getData() const {
   return mData;
 }
 
-unsigned int
-WebSocketFrame::getDataLength() {
-  return mDataLength;
-}
-
 void
-WebSocketFrame::setData(const char* data, unsigned int len) {
-  mData = (char*) malloc(len);
-  mDataLength = len;
-  memcpy((void*) mData, data, len);
+WebSocketFrame::setData(const Buffer& data) {
+  mData = data;
 }
 
 string
@@ -107,7 +97,7 @@ NotificationFrame::~NotificationFrame() {
 string
 NotificationFrame::getSubject() const {
   string type("Unknown notification type");
-  string dataStr(mData, mDataLength);
+  string dataStr(mData.getData(), mData.getLength());
   int posStart = dataStr.find("\"type\":\"");
 
   if (posStart >= 0) {
@@ -127,65 +117,54 @@ NotificationFrame::setSubject(string) {
   // Do nothing here. Subject is automatically set and we dont want to overwrite it.
 }
 
-WebSocketParser::WebSocketParser() : mData(nullptr), mLength(0), mHeaderHandled(false), mLastFrameType(UNKNOWN) {
+WebSocketParser::WebSocketParser() : mBuffer(nullptr, 0), mHeaderHandled(false), mLastFrameType(UNKNOWN) {
 }
 
 WebSocketParser::~WebSocketParser() {
-  if (mData) {
-    free((void*) mData);
-  }
 }
 
 void
-WebSocketParser::addStreamData(const char* data, unsigned int len) {
-  if (strncmp(data, "GET /", 5) == 0
-      || strncmp(data, "HTTP", 4) == 0) {
+WebSocketParser::addStreamData(const Buffer& buffer) {
+  if (buffer.startsWith("GET /") || buffer.startsWith("HTTP")) {
     mHeaderHandled = false;
   }
 
-  mData = (char*) realloc(mData, mLength + len);
-  memcpy(mData + mLength, data, len);
-  mLength += len;
+  mBuffer.append(buffer);
 }
 
 WebSocketFrame*
 WebSocketParser::getNextFrame() {
   if (!mHeaderHandled) {
-    char* pos = (char*) memmem(mData, mLength, "\r\n\r\n", 4);
+    int pos = mBuffer.indexOf("\r\n\r\n");
 
-    if (pos) {
+    if (pos > -1) {
+      Buffer frameBuffer = mBuffer.subbuffer(0, pos);
+      mBuffer = mBuffer.subbuffer(pos + 4);
+
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
       frame->setSubject("HEADER");
-      frame->setData(mData, pos - mData);
-
-      unsigned int len = pos - mData + 4;
-
-      if (mLength > len) {
-	mLength -= len;
-	memmove(mData, pos, mLength);
-      } else {
-	mLength = 0;
-      }
+      frame->setData(frameBuffer);
 
       mHeaderHandled = true;
       return frame;
     }
   }
 
-  if (mLength >= 2) {
+  if (mBuffer.getLength() >= 2) {
+    const char* data = mBuffer.getData();
     uint8_t payloadHeaderLength = 2;
-    uint16_t frameHeader = *((uint16_t*) mData);
+    uint16_t frameHeader = *((uint16_t*) data);
     uint8_t frameFlags = (frameHeader & 0xf0) >> 4;
     FrameType frameType = static_cast<FrameType>(frameHeader & 0x0f);
     uint8_t frameMasked = (frameHeader & 0x8000) >> 15;
     uint64_t payloadLength = (frameHeader & 0x7f00) >> 8;
 
     if (payloadLength == 126) {
-      payloadLength = ntohs(*((uint16_t*) (mData + 2)));
+      payloadLength = ntohs(*((uint16_t*) (data + 2)));
       payloadHeaderLength += 2;
     } else if (payloadLength == 127) {
-      payloadLength = ntohl(*((uint32_t*) (mData + 2)));
-      payloadLength += ((uint64_t) ntohl(*((uint32_t*) (mData + 6)))) << 32;
+      payloadLength = ntohl(*((uint32_t*) (data + 2)));
+      payloadLength += ((uint64_t) ntohl(*((uint32_t*) (data + 6)))) << 32;
       payloadHeaderLength += 10;
     }
 
@@ -193,7 +172,7 @@ WebSocketParser::getNextFrame() {
       payloadHeaderLength += 4;
     }
 
-    if (mLength >= payloadHeaderLength + payloadLength) {
+    if (mBuffer.getLength() >= payloadHeaderLength + payloadLength) {
       if (frameType != CONTINUATION) {
 	mLastFrameType = frameType;
       }
@@ -207,17 +186,9 @@ WebSocketParser::getNextFrame() {
 	frame->setSubject(WebSocketFrame::typeAsString(frameType));
       }
 
-      char* payload = (char*) malloc(payloadLength + 1);
-      payload[payloadLength] = '\0';
-      memcpy(payload, mData + payloadHeaderLength, payloadLength);
-      frame->setData(payload, payloadLength);
-      mLength -= payloadHeaderLength + payloadLength;
-      free(payload);
-
-      if (mLength > 0) {
-	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
-      }
-
+      Buffer payloadBuffer = mBuffer.subbuffer(payloadHeaderLength, payloadLength);
+      frame->setData(payloadBuffer);
+      mBuffer = mBuffer.subbuffer(payloadHeaderLength + payloadLength);
       return frame;
     }
   }

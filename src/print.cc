@@ -53,6 +53,10 @@ void printIndented(int indent, const char* str, int len) {
   }
 }
 
+void printIndented(int indent, const Buffer& buffer) {
+  printIndented(indent, buffer.getData(), buffer.getLength());
+}
+
 #ifdef ENABLE_JSON
 
 void printJsonArrayContent(JsonArray*, guint, JsonNode*, gpointer);

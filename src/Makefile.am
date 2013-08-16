@@ -4,6 +4,8 @@ pcap_http_analyzer_SOURCES = \
     main.cc \
     args.cc \
     args.h \
+    buffer.cc \
+    buffer.h \
     commparty.cc \
     commparty.h \
     print.cc \

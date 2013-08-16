@@ -1,6 +1,8 @@
 #ifndef __WEBSOCKET_H__
 #define __WEBSOCKET_H__
 
+#include "buffer.h"
+
 #include <string>
 
 using namespace std;
@@ -26,9 +28,8 @@ class WebSocketFrame
   int getFlags() const;
   FrameType getType() const;
 
-  const char* getData();
-  unsigned int getDataLength();
-  void setData(const char* data, unsigned int len);
+  const Buffer getData() const;
+  void setData(const Buffer& data);
 
   virtual string getSubject() const;
   virtual void setSubject(string subject);
@@ -38,8 +39,7 @@ class WebSocketFrame
  protected:
   int mFlags;
   FrameType mType;
-  const char* mData;
-  unsigned int mDataLength;
+  Buffer mData;
   string mSubject;
 };
 
@@ -59,12 +59,11 @@ class WebSocketParser
   WebSocketParser();
   virtual ~WebSocketParser();
 
-  void addStreamData(const char* data, unsigned int len);
+  void addStreamData(const Buffer& buffer);
   WebSocketFrame* getNextFrame();
 
  private:
-  char* mData;
-  unsigned int mLength;
+  Buffer mBuffer;
   bool mHeaderHandled;
   FrameType mLastFrameType;
 };
