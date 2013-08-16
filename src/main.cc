@@ -58,7 +58,8 @@ bool parseAndPrintJson(const char* data, uint16_t len) {
   } else {
     result = true;
     JsonNode* root = json_parser_get_root(parser);
-    printJson(json_node_get_object(root));
+    JsonObject* object = json_node_get_object(root);
+    printJson(object);
   }
 
   g_object_unref(parser);
@@ -73,20 +74,23 @@ void printTimestamp(struct timeval tv) {
     baseMicroSeconds = tv.tv_usec;
   }
 
-  long seconds = tv.tv_sec;
+  long secondsTotal = tv.tv_sec;
   long microSeconds = tv.tv_usec;
 
   if (sArgs.useStopwatchFormat()) {
-    seconds -= baseSeconds;
+    secondsTotal -= baseSeconds;
     microSeconds -= baseMicroSeconds;
 
     if (microSeconds < 0) {
       microSeconds += 1000000;
-      seconds--;
+      secondsTotal--;
     }
   }
 
-  printf("%02ld:%02ld:%02ld.%06ld ", (seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60, microSeconds);
+  int hours = (secondsTotal / 3600) % 24;
+  int minutes = (secondsTotal / 60) % 60;
+  int seconds = secondsTotal % 60;
+  printf("%02d:%02d:%02d.%06ld ", hours, minutes, seconds, microSeconds);
 }
 
 void printHttpRequestTitle(const char* data, int /* len */) {

@@ -130,9 +130,11 @@ void printJsonObject(JsonObject* object, unsigned int* indent) {
   GList* members = json_object_get_members(object);
 
   for (element = members; element; element = element->next) {
+    JsonNode* node = json_object_get_member(object, (const gchar*) element->data);
+
     printIndent(*indent);
     printf("\"%s\":", (const gchar*) element->data);
-    printJsonNode(json_object_get_member(object, (const gchar*) element->data), indent);
+    printJsonNode(node, indent);
 
     if (element->next != NULL) {
       printf(",");
