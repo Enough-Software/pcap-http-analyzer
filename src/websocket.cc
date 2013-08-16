@@ -46,8 +46,9 @@ WebSocketFrame::getDataLength() {
 
 void
 WebSocketFrame::setData(const char* data, unsigned int len) {
-  mData = data;
+  mData = (char*) malloc(len);
   mDataLength = len;
+  memcpy((void*) mData, data, len);
 }
 
 string
@@ -153,12 +154,9 @@ WebSocketParser::getNextFrame() {
     char* pos = (char*) memmem(mData, mLength, "\r\n\r\n", 4);
 
     if (pos) {
-      char* data = (char*) malloc(pos - mData);
-      memcpy(data, mData, pos - mData);
-
       WebSocketFrame* frame = new WebSocketFrame(0, UNKNOWN);
       frame->setSubject("HEADER");
-      frame->setData(data, pos - mData);
+      frame->setData(mData, pos - mData);
 
       unsigned int len = pos - mData + 4;
 
@@ -214,6 +212,7 @@ WebSocketParser::getNextFrame() {
       memcpy(payload, mData + payloadHeaderLength, payloadLength);
       frame->setData(payload, payloadLength);
       mLength -= payloadHeaderLength + payloadLength;
+      free(payload);
 
       if (mLength > 0) {
 	memmove(mData, mData + payloadHeaderLength + payloadLength, mLength);
