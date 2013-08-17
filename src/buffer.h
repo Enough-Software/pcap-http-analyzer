@@ -7,6 +7,7 @@ using namespace std;
 
 class Buffer {
  public:
+  Buffer();
   Buffer(const char* data, unsigned int length);
   Buffer(const Buffer& other);
   virtual ~Buffer();

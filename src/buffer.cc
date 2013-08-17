@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+Buffer::Buffer() : mData(nullptr), mLength(0) {
+}
+
 Buffer::Buffer(const char* data, unsigned int length) {
   mData = (char*) malloc(length);
   mLength = length;
