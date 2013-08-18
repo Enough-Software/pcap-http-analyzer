@@ -63,13 +63,8 @@ TcpAddress::getPort() const {
   return mPort;
 }
 
-TcpConnection::TcpConnection() : mLocal("192.168.1.1", 1234), mRemote("stringer.jibemobile.com", 8080) {
+TcpConnection::TcpConnection(const TcpAddress& first, const TcpAddress& second) : mFirst(first), mSecond(second) {
 }
 
 TcpConnection::~TcpConnection() {
-}
-
-TcpConnection*
-TcpConnection::newConnection() {
-  return nullptr;
 }

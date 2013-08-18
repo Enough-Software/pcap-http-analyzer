@@ -109,25 +109,20 @@ enum TcpConnectionState {
 
 class TcpConnection {
  public:
-  TcpConnection();
+  TcpConnection(const TcpAddress& first, const TcpAddress& second);
   virtual ~TcpConnection();
 
   virtual bool addPacket(const Buffer& data) = 0;
 
-  static TcpConnection* newConnection();
-
  private:
-  TcpAddress mLocal;
-  TcpAddress mRemote;
+  TcpAddress mFirst;
+  TcpAddress mSecond;
   TcpConnectionState mState;
 };
 
 class TcpConnectionManager {
  public:
-  static TcpConnection* getConnection();
-
- private:
-  static list<pair<pair<TcpAddress, TcpAddress>, TcpConnection*>> sConnections;
+  static TcpConnection* getConnection(const TcpAddress& first, const TcpAddress& second);
 };
 
 #endif /* __TCP_H__ */
