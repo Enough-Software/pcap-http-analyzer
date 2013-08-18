@@ -6,6 +6,8 @@
 #include <list>
 #include <string>
 
+#include "buffer.h"
+
 using namespace std;
 
 typedef u_int32_t tcp_seq;
@@ -59,8 +61,6 @@ typedef struct ether_header RawEtherPacket;
 typedef struct nread_ip RawIpPacket;
 typedef struct nread_tcp RawTcpPacket;
 
-class Buffer;
-
 class IPv4 {
  public:
   IPv4(const struct in_addr& addr);
@@ -112,12 +112,14 @@ class TcpConnection {
   TcpConnection(const TcpAddress& first, const TcpAddress& second);
   virtual ~TcpConnection();
 
-  virtual bool addPacket(const Buffer& data) = 0;
+  virtual void addPacket(bool isIncoming, const Buffer& data);
 
  private:
   TcpAddress mFirst;
   TcpAddress mSecond;
   TcpConnectionState mState;
+  Buffer mOutBuffer;
+  Buffer mInBuffer;
 };
 
 class TcpConnectionManager {

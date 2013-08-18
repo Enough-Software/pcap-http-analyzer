@@ -68,3 +68,12 @@ TcpConnection::TcpConnection(const TcpAddress& first, const TcpAddress& second) 
 
 TcpConnection::~TcpConnection() {
 }
+
+void
+TcpConnection::addPacket(bool isIncoming, const Buffer& buffer) {
+  if (isIncoming) {
+    mInBuffer.append(buffer);
+  } else {
+    mOutBuffer.append(buffer);
+  }
+}
