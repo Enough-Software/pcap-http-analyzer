@@ -14,6 +14,7 @@
 #include "commparty.h"
 #include "print.h"
 #include "tcp.h"
+#include "util.h"
 #include "websocket.h"
 
 using namespace std;
@@ -97,7 +98,7 @@ void printTimestamp(struct timeval tv) {
 void printHttpRequestTitle(const Buffer& buffer) {
   printf("ht ");
   const char* data = buffer.getData();
-  const char* eol_char = strchr(data, '\r');
+  const char* eol_char = strnchr(data, '\r', buffer.getLength());
 
   if (!eol_char) {
     printf("DATA\n");
@@ -153,7 +154,7 @@ void handleHttpResponse(const Buffer& buffer) {
     printf("\n");
     const char* data = buffer.getData();
     int len = buffer.getLength();
-    const char* bodySeparator = strstr(data, "\r\n\r\n");
+    const char* bodySeparator = strnstr(data, "\r\n\r\n", len);
 
     if (bodySeparator) {
       printIndented(4, data, bodySeparator - data);

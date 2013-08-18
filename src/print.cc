@@ -3,23 +3,9 @@
 #endif /* HAVE_CONFIG_H */
 
 #include "print.h"
+#include "util.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-const char* strnchr(const char *str, size_t len, int character) {
-  const char* end = str + len;
-  char c = (char) character;
-
-  do {
-    if (*str == c) {
-      return str;
-    }
-  } while (++str < end);
-
-  return NULL;
-}
 
 void printIndent(int indent) {
   for (int index = 0; index < indent; index++) {
