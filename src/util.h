@@ -1,13 +1,14 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-#ifndef __APPLE__
-
 #include <stdlib.h>
 
+#ifndef HAVE_STRNCHR
 const char* strnchr(const char* str, size_t len, int character);
-const char* strnstr(const char* str, const char* find, size_t len);
+#endif /* HAVE_STRNCHR */
 
-#endif /* __APPLE__ */
+#ifndef HAVE_STRNSTR
+const char* strnstr(const char* str, const char* find, size_t len);
+#endif /* HAVE_STRNSTR */
 
 #endif /* __UTIL_H__ */

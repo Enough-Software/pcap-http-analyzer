@@ -1,8 +1,8 @@
 #include "util.h"
 
-#ifndef __APPLE__
-
 #include <string.h>
+
+#ifndef HAVE_STRNCHR
 
 const char* strnchr(const char* str, size_t len, int character) {
   const char* end = str + len;
@@ -16,6 +16,10 @@ const char* strnchr(const char* str, size_t len, int character) {
 
   return NULL;
 }
+
+#endif /* HAVE_STRNCHR */
+
+#ifndef HAVE_STRNSTR
 
 const char* strnstr(const char* str, const char* find, size_t len)
 {
@@ -43,4 +47,4 @@ const char* strnstr(const char* str, const char* find, size_t len)
   return ((char*) str);
 }
 
-#endif /* __APPLE__ */
+#endif /* HAVE_STRNSTR */
