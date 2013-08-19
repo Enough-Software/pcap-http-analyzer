@@ -117,7 +117,6 @@ class TcpConnection {
  private:
   TcpAddress mFirst;
   TcpAddress mSecond;
-  TcpConnectionState mState;
   Buffer mOutBuffer;
   Buffer mInBuffer;
 };
