@@ -21,7 +21,7 @@ const char* strnchr(const char* str, size_t len, int character) {
 
 #ifndef HAVE_STRNSTR
 
-const char* strnstr(const char* str, const char* find, size_t len)
+char* strnstr(const char* str, const char* find, size_t len)
 {
   char c, sc;
   size_t flen;
