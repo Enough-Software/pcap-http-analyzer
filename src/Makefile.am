@@ -12,7 +12,7 @@ pcap_http_analyzer_SOURCES = \
     print.h\
     tcp.h \
     tcp.cc \
-    utils.h \
+    util.h \
     util.cc \
     websocket.cc \
     websocket.h
