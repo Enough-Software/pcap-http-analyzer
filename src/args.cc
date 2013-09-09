@@ -66,26 +66,28 @@ Args::printUsage(string programName) {
   fprintf(stderr, "  --short, -s       short output format, no detailed messages\n");
   fprintf(stderr, "  --stopwatch, -0   don't use wall clock time for packets, instead start at 00:00:00\n");
   fprintf(stderr, "  --http-ports=...  comma separated list of ports used for HTTP/REST connections\n");
-  fprintf(stderr, "  --ws-ports=...    comma separated list of ports used for RFC 6455 compliant web socket connections\n\n");
+  fprintf(stderr, "  --ws-ports=...    comma separated list of ports used for RFC 6455 compliant web socket connections\n");
+  fprintf(stderr, "  --format-json, -j format JSON\n\n");
   exit(1);
 }
 
 Args::Args() {
 }
 
-Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchFormat(false) {
+Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchFormat(false), mFormatJson(false) {
   static struct option long_options[] = {
-    { "filter",     required_argument, 0, 'f'},
-    { "short",      no_argument,       0, 's'},
-    { "stopwatch",  no_argument,       0, '0'},
-    { "http-ports", required_argument, 0, 'h'},
-    { "ws-ports",   required_argument, 0, 'w'},
+    { "filter",      required_argument, 0, 'f'},
+    { "short",       no_argument,       0, 's'},
+    { "stopwatch",   no_argument,       0, '0'},
+    { "http-ports",  required_argument, 0, 'h'},
+    { "ws-ports",    required_argument, 0, 'w'},
+    { "format-json", no_argument,       0, 'j'},
     { 0, 0, 0, 0 }
   };
 
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "f:sh:w:0", long_options, &option_index);
+    int c = getopt_long(argc, argv, "f:jsh:w:0", long_options, &option_index);
 
     if (c == -1) {
       break;
@@ -106,6 +108,10 @@ Args::Args(int argc, char** argv) : mUseShortOutputFormat(false), mUseStopwatchF
 
     case 'w':
       parseWebSocketPorts(optarg);
+      break;
+
+    case 'j':
+      mFormatJson = true;
       break;
 
     case '0':
@@ -138,6 +144,11 @@ Args::useShortOutputFormat() {
 bool
 Args::useStopwatchFormat() {
   return mUseStopwatchFormat;
+}
+
+bool
+Args::isFormatJsonEnabled() {
+  return mFormatJson;
 }
 
 list<Netmask>

@@ -17,6 +17,7 @@ class Args {
 
   bool useShortOutputFormat();
   bool useStopwatchFormat();
+  bool isFormatJsonEnabled();
   list<Netmask> getFilters();
   set<unsigned short>& getHttpPorts();
   set<unsigned short>& getWebSocketPorts();
@@ -31,6 +32,7 @@ class Args {
  private:
   bool mUseShortOutputFormat;
   bool mUseStopwatchFormat;
+  bool mFormatJson;
   list<Netmask> mFilters;
   set<unsigned short> mHttpPorts;
   set<unsigned short> mWebSocketPorts;

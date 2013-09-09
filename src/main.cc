@@ -47,9 +47,12 @@ int isIncomingIpPacket(const RawIpPacket* ip) {
   return false;
 }
 
-#ifdef ENABLE_JSON
-
 bool parseAndPrintJson(const Buffer& buffer) {
+#ifdef ENABLE_JSON
+  if (!sArgs.isFormatJsonEnabled()) {
+    return false;
+  }
+
   GError* error = NULL;
   bool result = false;
   JsonParser* parser = json_parser_new();
@@ -66,9 +69,10 @@ bool parseAndPrintJson(const Buffer& buffer) {
 
   g_object_unref(parser);
   return result;
-}
-
+#else /* ENABLE_JSON */
+  return false;
 #endif /* ENABLE_JSON */
+}
 
 void printTimestamp(struct timeval tv) {
   if (baseSeconds == 0) {
@@ -127,19 +131,15 @@ void handleHttpRequest(const Buffer& buffer) {
   if (!sArgs.useShortOutputFormat()) {
     printf("\n");
 
-#ifdef ENABLE_JSON
     if (!parseAndPrintJson(buffer)) {
-#endif /* ENABLE_JSON */
       printIndented(4, buffer);
 
       if (buffer[len - 1] != '\n') {
 	printf("\n");
       }
-#ifdef ENABLE_JSON
     } else {
       printf("\n");
     }
-#endif /* ENABLE_JSON */
   }
 }
 
@@ -165,13 +165,9 @@ void handleHttpResponse(const Buffer& buffer) {
 	const char* body = bodySeparator + 4;
         Buffer buffer(body, bodyLength);
 
-#ifdef ENABLE_JSON
 	if (!parseAndPrintJson(buffer)) {
-#endif /* ENABLE_JSON */
 	  printIndented(4, buffer);
-#ifdef ENABLE_JSON
 	}
-#endif /* ENABLE_JSON */
       } else {
 	printIndented(4, "Empty body", 12);
       }
@@ -203,17 +199,15 @@ void handleWebsocketNotification(string partyName, bool isIncoming, struct timev
 	printf("\n");
 
 	if (frameData.getLength() > 0) {
-#ifdef ENABLE_JSON
 	  if (!parseAndPrintJson(frameData)) {
 	    printf("    ");
 	    PRINT_BUFFER_1(frameData);
+#ifdef ENABLE_JSON
 	    printf(" (FAILED TO PARSE)\n");
-	  }
 #else /* ENABLE_JSON */
-	  printf("    ");
-	  PRINT_BUFFER_1(frameData);
-	  printf("\n");
+	    printf("\n");
 #endif /* ENABLE_JSON */
+	  }
 	} else {
 	  printf("    Empty frame\n");
 	}
