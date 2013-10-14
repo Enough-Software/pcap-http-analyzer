@@ -54,7 +54,7 @@ The output of this looks like this.
     Accept: application/json
     Content-Length: 54
     Connection: keep-alive
-    User-Agent: JibeOn/2 CFNetwork/609 Darwin/13.0.0
+    User-Agent: EnoughApi/2 CFNetwork/609 Darwin/13.0.0
     
     {"msisdn":"+4917123456789","token":"W9bOnqNL219xdXvW"}
 
@@ -83,7 +83,7 @@ The output of this looks like this.
     Accept-Language: de-de
     Connection: keep-alive
     AppId: a38b5cdaa640463f8015dfd1e48541b1
-    User-Agent: JibeOn/2 CFNetwork/609 Darwin/13.0.0
+    User-Agent: EnoughApi/2 CFNetwork/609 Darwin/13.0.0
     
  A << 00:00:00.385901 ht DATA
 
