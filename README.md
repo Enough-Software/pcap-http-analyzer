@@ -56,7 +56,7 @@ The output of this looks like this.
     Connection: keep-alive
     User-Agent: JibeOn/2 CFNetwork/609 Darwin/13.0.0
     
-    {"msisdn":"+4917468711116","token":"W9bOnqNL219xdXvW"}
+    {"msisdn":"+4917123456789","token":"W9bOnqNL219xdXvW"}
 
  A << 00:00:00.056903 ht DATA
 
@@ -70,11 +70,11 @@ The output of this looks like this.
     Content-Length: 181
     Server: Jetty(7.1.6.v20100715)
 
-    {"id":230,"displayName":"BiPhone4","email":"+4917468711116@enough.de","token":"W9bOnqNL219xdXvW","msisdn":"+4917468711116","createDate":"2013-04-22T05:36:43PDT","imsi":"25503"}
+    {"id":230,"displayName":"iPhone4","email":"+4917123456789@enough.de","token":"W9bOnqNL219xdXvW","msisdn":"+4917123456789","createDate":"2013-04-22T05:36:43PDT","imsi":"25503"}
 
  A >> 00:00:00.331600 ht DATA
 
-    GET /api/notificationchannel/v1/sip:+4917468711116@enough.de/channels HTTP/1.1
+    GET /api/notificationchannel/v1/sip:+4917123456789@enough.de/channels HTTP/1.1
     Host: api.enough.de:8088
     DeviceId: 5735636dbe3a412d8c69dd462fbf4d28
     Authorization: OAuth oauth_consumer_key="230", oauth_signature_method="HMAC-SHA1", oauth_version="1.0", oauth_nonce="18369866333060263699", oauth_timestamp="1370251292", oauth_signature="gmbv5okogiaKx5bb8UrJ4sLewVY%3D"
@@ -98,7 +98,7 @@ The output of this looks like this.
     Content-Length: 470
     Date: Mon, 03 Jun 2013 09:21:31 GMT
 
-    {"notificationChannel":[{"channelId":null,"expiryTimestamp":1370253097386,"clientCorrelator":"123","applicationTag":"JibeSDKDemo","channelType":"WebSocket","channelData":{"channelURL":"ws://api.enough.de:8089/ws?c=r1pDGF4FaG","maxNotifications":1},"channelLifetime":2800,"callbackURL":"/api/unused/not-used-by-srg","resourceURL":"/api/notificationchannel/v1/sip:+4917468711116@enough.de/channels/r1pDGF4FaG"}],"resourceURL":null}
+    {"notificationChannel":[{"channelId":null,"expiryTimestamp":1370253097386,"clientCorrelator":"123","applicationTag":"JibeSDKDemo","channelType":"WebSocket","channelData":{"channelURL":"ws://api.enough.de:8089/ws?c=r1pDGF4FaG","maxNotifications":1},"resourceURL":"/api/notificationchannel/v1/sip:+4917123456789@enough.de/channels/r1pDGF4FaG"}],"resourceURL":null}
 
  A >> 00:00:00.506426 ws HEADER
 
