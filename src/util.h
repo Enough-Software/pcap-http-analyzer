@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "config.h"
+
 #ifndef HAVE_STRNCHR
 const char* strnchr(const char* str, size_t len, int character);
 #endif /* HAVE_STRNCHR */
