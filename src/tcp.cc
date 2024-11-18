@@ -35,7 +35,13 @@ Netmask::getNetbits() const {
 
 bool
 Netmask::matches(const IPv4& ip) const {
-  uint32_t mask = 0xffffffff << (32 - mNetbits);
+  uint32_t mask;
+  // https://github.com/Enough-Software/pcap-http-analyzer/issues/1
+  if (mNetbits == 0) {
+    mask = 0;
+  } else {
+    mask = 0xffffffff << (32 - mNetbits);
+  }
   uint32_t networkFilter = ntohl(mIp.getAddress().s_addr) & mask;
   uint32_t networkPacket = ntohl(ip.getAddress().s_addr) & mask;
   return networkFilter == networkPacket;
